@@ -1,0 +1,9 @@
+<library path="lib/libagni_tf_tools">
+  <class name="agni_tf_tools/Static Transform Publisher"
+         type="agni_tf_tools::TransformPublisherDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Interactively specify a static transform to be published.
+    </description>
+  </class>
+</library>

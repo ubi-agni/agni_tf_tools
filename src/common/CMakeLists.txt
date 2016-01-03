@@ -6,7 +6,8 @@ add_library(${PROJECT_NAME} STATIC
    TransformWidget.cpp
    FramesWidget.cpp
    TransformBroadcaster.cpp
-   ${UI_SOURCES})
+   ${UI_SOURCES}
+)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

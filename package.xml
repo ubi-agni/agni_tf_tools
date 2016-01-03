@@ -37,14 +37,16 @@
   <build_depend>cmake_modules</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>tf2_ros</build_depend>
-  <build_depend>interactive_markers</build_depend>
+  <build_depend>rviz</build_depend>
 
   <!-- Use run_depend for packages you need at runtime: -->
   <run_depend>roscpp</run_depend>
   <run_depend>tf2_ros</run_depend>
+  <run_depend>rviz</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
+    <rviz plugin="${prefix}/plugin_description.xml"/>
   </export>
 </package>

@@ -35,10 +35,13 @@ set_target_properties(${PROJECT_NAME}_static_transform_publisher_gui
   PROPERTIES OUTPUT_NAME static_transform_publisher_gui
 )
 
+# rviz plugin lib
+add_subdirectory(plugin)
 
 # Install rules
 install(TARGETS
   ${PROJECT_NAME}_static_transform_publisher
+  ${PROJECT_NAME}_static_transform_publisher_gui
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
