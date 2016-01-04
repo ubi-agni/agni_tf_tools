@@ -164,21 +164,40 @@ vm::InteractiveMarker TransformPublisherDisplay::createInteractiveMarker() const
   ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitZ(), QColor("blue")));
 
   vm::InteractiveMarker imarker;
-  imarker.header.frame_id = parent_frame_property_->getFrameStd();
-  imarker.header.stamp = ros::Time::now();
-  updatePose(imarker.pose,
-             rotation_property_->getQuaternion(),
-             translation_property_->getVector());
+  fillPoseStamped(imarker.header, imarker.pose);
   imarker.scale = scale;
-
   imarker.controls.push_back(ctrl);
   return imarker;
 }
 
+void TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
+                                                geometry_msgs::Pose &pose) const
+{
+  const Eigen::Quaterniond &q = rotation_property_->getQuaternion();
+  const Ogre::Vector3 &p = translation_property_->getVector();
+  updatePose(pose, q, p);
+  header.frame_id = parent_frame_property_->getFrameStd();
+  header.stamp = ros::Time::now();
+}
+
 void TransformPublisherDisplay::onFramesChanged()
 {
-  tf_pub_->setParentFrame(parent_frame_property_->getFrame());
-  tf_pub_->setChildFrame(child_frame_property_->getFrame());
+  if (ignore_updates_) return;
+
+  // update marker pose
+  visualization_msgs::InteractiveMarkerPose marker_pose;
+  fillPoseStamped(marker_pose.header, marker_pose.pose);
+  imarker_->processMessage(marker_pose);
+
+  // broadcast transform
+  geometry_msgs::TransformStamped tf;
+  tf.header = marker_pose.header;
+  tf.child_frame_id = child_frame_property_->getFrameStd();
+  tf.transform.translation.x = marker_pose.pose.position.x;
+  tf.transform.translation.y = marker_pose.pose.position.y;
+  tf.transform.translation.z = marker_pose.pose.position.z;
+  tf.transform.rotation = marker_pose.pose.orientation;
+  tf_pub_->setValue(tf);
 }
 
 void TransformPublisherDisplay::onTransformChanged()

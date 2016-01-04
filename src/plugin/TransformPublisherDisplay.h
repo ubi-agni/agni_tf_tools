@@ -35,6 +35,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
+#include <geometry_msgs/PoseStamped.h>
 
 namespace rviz
 {
@@ -72,6 +73,7 @@ protected:
   void update(float wall_dt, float ros_dt);
 
   virtual visualization_msgs::InteractiveMarker createInteractiveMarker() const;
+  void fillPoseStamped(std_msgs::Header &header, geometry_msgs::Pose &pose) const;
 
 protected Q_SLOTS:
   void onFramesChanged();
