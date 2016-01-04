@@ -1,5 +1,6 @@
 add_library(${PROJECT_NAME}_plugins MODULE
   TransformPublisherDisplay.cpp
+  euler_property.cpp
   plugin_init.cpp
 )
 
@@ -8,7 +9,7 @@ add_library(${PROJECT_NAME}_plugins MODULE
 # add_dependencies(${PROJECT_NAME}_plugins ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_plugins ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_plugins ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME}_plugins
   PROPERTIES OUTPUT_NAME ${PROJECT_NAME}

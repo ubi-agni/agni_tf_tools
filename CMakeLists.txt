@@ -4,7 +4,7 @@ project(agni_tf_tools)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp tf2_ros)
+find_package(catkin REQUIRED roscpp tf2_ros rviz)
 find_package(Qt4 REQUIRED)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
@@ -12,7 +12,7 @@ find_package(Eigen REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS program_options)
 
-include_directories(${EIGEN_INCLUDE_DIRS})
+include_directories(${EIGEN_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed

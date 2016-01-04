@@ -40,7 +40,12 @@ class Property;
 class StringProperty;
 class BoolProperty;
 class FloatProperty;
+class VectorProperty;
+class QuaternionProperty;
+class TfFrameProperty;
 }
+
+class TransformBroadcaster;
 
 namespace agni_tf_tools
 {
@@ -53,9 +58,6 @@ public:
   TransformPublisherDisplay();
   ~TransformPublisherDisplay();
 
-  void load(const rviz::Config& config);
-  void save(rviz::Config config) const;
-
   void reset();
 
 protected:
@@ -63,9 +65,17 @@ protected:
   void onEnable();
   void onDisable();
 
+protected Q_SLOTS:
+  void updateFrames();
+  void updateTransform();
+
 protected:
-  // properties to show on side panel
-  rviz::StringProperty *robot_description_property_;
+  rviz::VectorProperty *translation_property_;
+  rviz::QuaternionProperty *quaternion_property_;
+  rviz::BoolProperty *broadcast_property_;
+  rviz::TfFrameProperty *parent_frame_property_;
+  rviz::TfFrameProperty *child_frame_property_;
+  TransformBroadcaster *tf_pub_;
 };
 
 } // namespace rviz_cbf_plugin

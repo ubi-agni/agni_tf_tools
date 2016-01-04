@@ -30,10 +30,16 @@
  */
 
 #include "TransformPublisherDisplay.h"
+#include "TransformBroadcaster.h"
+#include "euler_property.h"
 
 #include <rviz/properties/string_property.h>
 #include <rviz/properties/bool_property.h>
+#include <rviz/properties/vector_property.h>
+#include <rviz/properties/quaternion_property.h>
+#include <rviz/properties/tf_frame_property.h>
 #include <rviz/display_factory.h>
+#include <rviz/display_context.h>
 
 namespace agni_tf_tools
 {
@@ -41,6 +47,18 @@ namespace agni_tf_tools
 TransformPublisherDisplay::TransformPublisherDisplay() :
   rviz::Display()
 {
+  translation_property_ = new rviz::VectorProperty("translation", Ogre::Vector3::ZERO, "", this);
+  rviz::Property *rot = new rviz::Property("rotation", QVariant(), "", this);
+  quaternion_property_ = new rviz::QuaternionProperty("quaternion", Ogre::Quaternion::IDENTITY, "", rot);
+  new rviz::EulerProperty("Euler angles", Eigen::Quaterniond::Identity(), rot);
+
+  parent_frame_property_ = new rviz::TfFrameProperty("parent frame", "", "", this, 0, false,
+                                                     SLOT(updateFrames()), this);
+  broadcast_property_ = new rviz::BoolProperty("publish transform", true, "", this);
+  child_frame_property_ = new rviz::TfFrameProperty("child frame", "", "", broadcast_property_, 0, false,
+                                                    SLOT(updateFrames()), this);
+
+  tf_pub_ = new TransformBroadcaster("", "", this);
 }
 
 TransformPublisherDisplay::~TransformPublisherDisplay()
@@ -49,8 +67,13 @@ TransformPublisherDisplay::~TransformPublisherDisplay()
 
 void TransformPublisherDisplay::onInitialize()
 {
-  // show children by default
+  Display::onInitialize();
+  parent_frame_property_->setFrameManager(context_->getFrameManager());
+  child_frame_property_->setFrameManager(context_->getFrameManager());
+
+  // show some children by default
   this->expand();
+  broadcast_property_->expand();
 }
 
 void TransformPublisherDisplay::reset()
@@ -68,14 +91,10 @@ void TransformPublisherDisplay::onDisable()
   Display::onDisable();
 }
 
-void TransformPublisherDisplay::load(const rviz::Config& config)
+void TransformPublisherDisplay::updateFrames()
 {
-  Display::load(config);
-}
-
-void TransformPublisherDisplay::save(rviz::Config config) const
-{
-  Display::save(config);
+  tf_pub_->setParentFrame(parent_frame_property_->getValue().toString());
+  tf_pub_->setChildFrame(child_frame_property_->getValue().toString());
 }
 
 } // namespace agni_tf_tools
