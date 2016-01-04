@@ -54,41 +54,36 @@ EulerProperty::invalid_axes::invalid_axes(char axis) :
 {
 }
 
-EulerProperty::EulerProperty(const QString& name,
+EulerProperty::EulerProperty(Property* parent, const QString& name,
                              const Eigen::Quaterniond& value,
-                             Property* parent,
                              const char *changed_slot,
                              QObject* receiver)
   : Property(name, QVariant(),
-             "Euler angles specified in degrees.\n"
+             "Angles specified in degrees.\n"
              "Choose axes with spec like xyz, zxz, or rpy.\n"
-             "Static frame or rotational frame composition\n"
+             "Composition w.r.t. the static or rotating frame\n"
              "is selected by prefixing with 's' or 'r'.",
              parent, changed_slot, receiver)
   , quaternion_(value)
   , ignore_child_updates_(false)
 {
-  euler_[0] = new FloatProperty("", 0, "first Euler angle", this);
-  euler_[1] = new FloatProperty("", 0, "second Euler angle", this);
-  euler_[2] = new FloatProperty("", 0, "third Euler angle", this);
+  euler_[0] = new FloatProperty("", 0, "rotation angle about first axis", this);
+  euler_[1] = new FloatProperty("", 0, "rotation angle about second axis", this);
+  euler_[2] = new FloatProperty("", 0, "rotation angle about third axis", this);
   setEulerAxes("rpy");
 
   for (int i=0; i < 3; ++i) {
     connect(euler_[i], SIGNAL(aboutToChange()), this, SLOT(emitAboutToChange()));
     connect(euler_[i], SIGNAL(changed()), this, SLOT(updateFromChildren()));
   }
-  connect(this, SIGNAL(quaternionChanged(Eigen::Quaterniond)),
-          this, SIGNAL(changed()));
 }
 
 void EulerProperty::setQuaternion(const Eigen::Quaterniond& q)
 {
   if (quaternion_.isApprox(q)) return;
 
-  Q_EMIT aboutToChange();
   quaternion_ = q;
-  updateAngles();
-  Q_EMIT quaternionChanged(q);
+  updateAngles(); // this will also emit changed signals (in setEulerAngles)
 }
 
 void EulerProperty::setEulerAngles(double euler[], bool normalize)
@@ -105,16 +100,20 @@ void EulerProperty::setEulerAngles(double euler[], bool normalize)
 
   if (normalize) setQuaternion(q);
   else {
-    ignore_child_updates_ = true;
-    for (int i=0; i < 3; ++i)
-      euler_[i]->setValue(angles::to_degrees(euler[i]));
-    ignore_child_updates_ = false;
-    updateString();
+    if (!ignore_child_updates_) {
+      ignore_child_updates_ = true;
+      for (int i=0; i < 3; ++i)
+        euler_[i]->setValue(angles::to_degrees(euler[i]));
+      ignore_child_updates_ = false;
+    }
 
-    if (quaternion_.isApprox(q)) return;
     Q_EMIT aboutToChange();
-    quaternion_ = q;
-    Q_EMIT quaternionChanged(q);
+    if (!quaternion_.isApprox(q)) {
+      quaternion_ = q;
+      Q_EMIT quaternionChanged(q);
+    }
+    updateString();
+    Q_EMIT changed();
   }
 }
 
@@ -124,28 +123,29 @@ void EulerProperty::setEulerAngles(double e1, double e2, double e3, bool normali
   setEulerAngles(euler, normalize);
 }
 
-void EulerProperty::setEulerAxes(const QString &axes_string)
+void EulerProperty::setEulerAxes(const QString &axes_spec)
 {
   static const std::vector<QString> xyzNames = boost::assign::list_of("x")("y")("z");
   static const std::vector<QString> rpyNames = boost::assign::list_of("roll")("pitch")("yaw");
   const std::vector<QString> *names = &xyzNames;
 
-  if (axes_string_ == axes_string) return;
-  QString sAxes = axes_string;
+  if (axes_string_ == axes_spec) return;
+  QString sAxes = axes_spec;
   if (sAxes == "rpy") {
     sAxes = "sxyz";
-    names = &rpyNames;
+    //    names = &rpyNames;
   }
 
   // static or rotated frame order?
   const char* pc = sAxes.toLatin1().constData();
-  if (*pc == 's') fixed_ = true;
-  else if (*pc == 'r') fixed_ = false;
-  else {fixed_ = false; --pc;}
+  bool fixed;
+  if (*pc == 's') fixed = true;
+  else if (*pc == 'r') fixed = false;
+  else {fixed = false; --pc;}
   ++pc; // advance to first axis char
 
   // need to have 3 axes specs
-  if (axes_string.isEmpty() || strlen(pc) != 3)
+  if (axes_spec.isEmpty() || strlen(pc) != 3)
     throw invalid_axes();
 
   // parse axes specs into indexes
@@ -158,10 +158,11 @@ void EulerProperty::setEulerAxes(const QString &axes_string)
   }
 
   // everything OK: accept changes
-  axes_string_ = axes_string;
+  axes_string_ = axes_spec;
+  fixed_ = fixed;
   for (int i=0; i < 3; ++i) {
     axes_[i] = axes[i];
-    euler_[i]->setName((*names)[i]);
+    euler_[i]->setName((*names)[axes[i]]);
   }
 
   // finally compute euler angles matching the new axes
@@ -198,9 +199,13 @@ bool EulerProperty::setValue(const QVariant& value)
 void EulerProperty::updateFromChildren()
 {
   if (ignore_child_updates_) return;
-  setEulerAngles(euler_[0]->getValue().toFloat(),
-      euler_[1]->getValue().toFloat(),
-      euler_[2]->getValue().toFloat(), false);
+  double euler[3];
+  for (int i = 0; i < 3; ++i)
+    euler[i] = angles::from_degrees(euler_[i]->getValue().toFloat());
+
+  ignore_child_updates_ = true;
+  setEulerAngles(euler, false);
+  ignore_child_updates_ = false;
 }
 
 void EulerProperty::emitAboutToChange()
@@ -211,8 +216,12 @@ void EulerProperty::emitAboutToChange()
 
 void EulerProperty::updateAngles()
 {
-  Eigen::Vector3d e = quaternion_.matrix().eulerAngles(axes_[0], axes_[1], axes_[2]);
-  if (fixed_) std::swap(e[0], e[2]); // flip order
+  Eigen::Vector3d e;
+  if (fixed_) {
+    e = quaternion_.matrix().eulerAngles(axes_[2], axes_[1], axes_[0]);
+    std::swap(e[0], e[2]);
+  } else
+    e = quaternion_.matrix().eulerAngles(axes_[0], axes_[1], axes_[2]);
   setEulerAngles(e.data(), false);
 }
 

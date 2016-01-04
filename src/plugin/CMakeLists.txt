@@ -1,6 +1,7 @@
 add_library(${PROJECT_NAME}_plugins MODULE
   TransformPublisherDisplay.cpp
   euler_property.cpp
+  rotation_property.cpp
   plugin_init.cpp
 )
 

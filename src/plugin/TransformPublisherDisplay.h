@@ -33,6 +33,8 @@
 
 #include <rviz/display.h>
 #include <ros/ros.h>
+#include <visualization_msgs/InteractiveMarker.h>
+#include <visualization_msgs/InteractiveMarkerFeedback.h>
 
 namespace rviz
 {
@@ -41,14 +43,17 @@ class StringProperty;
 class BoolProperty;
 class FloatProperty;
 class VectorProperty;
-class QuaternionProperty;
 class TfFrameProperty;
+
+class InteractiveMarker;
 }
 
 class TransformBroadcaster;
 
 namespace agni_tf_tools
 {
+
+class RotationProperty;
 
 class TransformPublisherDisplay : public rviz::Display
 {
@@ -64,18 +69,27 @@ protected:
   void onInitialize();
   void onEnable();
   void onDisable();
+  void update(float wall_dt, float ros_dt);
+
+  virtual visualization_msgs::InteractiveMarker createInteractiveMarker() const;
 
 protected Q_SLOTS:
-  void updateFrames();
-  void updateTransform();
+  void onFramesChanged();
+  void onTransformChanged();
+  void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback);
+  void onBroadcastChanged();
 
 protected:
   rviz::VectorProperty *translation_property_;
-  rviz::QuaternionProperty *quaternion_property_;
+  RotationProperty *rotation_property_;
   rviz::BoolProperty *broadcast_property_;
   rviz::TfFrameProperty *parent_frame_property_;
   rviz::TfFrameProperty *child_frame_property_;
   TransformBroadcaster *tf_pub_;
+
+  // interactive marker stuff
+  rviz::InteractiveMarker *imarker_;
+  bool ignore_updates_ ;
 };
 
 } // namespace rviz_cbf_plugin

@@ -29,43 +29,35 @@
  * Author: Robert Haschke <rhaschke@techfak.uni-bielefeld.de>
  */
 
-#ifndef EULER_PROPERTY_H
-#define EULER_PROPERTY_H
+#ifndef ROTATION_PROPERTY_H
+#define ROTATION_PROPERTY_H
 
 #include <Eigen/Geometry>
 #include <stdexcept>
 
-#include "rviz/properties/property.h"
+#include <rviz/properties/string_property.h>
+#include <rviz/properties/quaternion_property.h>
+#include "euler_property.h"
 
-namespace rviz
+namespace agni_tf_tools
 {
 
-class FloatProperty;
-
-class EulerProperty: public Property
+class RotationProperty: public rviz::StringProperty
 {
-  Q_OBJECT
+Q_OBJECT
 public:
-  class invalid_axes : public std::invalid_argument {
-  public:
-    invalid_axes();
-    invalid_axes(const std::string&msg);
-    invalid_axes(char axis);
-  };
+  RotationProperty(Property* parent = 0,
+                   const QString& name = QString(),
+                   const Eigen::Quaterniond& value = Eigen::Quaterniond::Identity(),
+                   const char *changed_slot = 0,
+                   QObject* receiver = 0);
 
-  EulerProperty(Property* parent = 0,
-                const QString& name = QString(),
-                const Eigen::Quaterniond& value = Eigen::Quaterniond::Identity(),
-                const char *changed_slot = 0,
-                QObject* receiver = 0);
-
-  Eigen::Quaterniond getQuaternion() const {return quaternion_;}
+  Eigen::Quaterniond getQuaternion() const;
   virtual bool setValue(const QVariant& value);
 
-  /** @brief Load the value of this property and/or its children from
-   * the given Config node. */
-  virtual void load(const Config& config);
-  virtual void save(Config config) const;
+  /** @brief Load the value of this property and/or its children from the given Config node. */
+  virtual void load(const rviz::Config& config);
+  virtual void save(rviz::Config config) const;
 
   /** @brief Overridden from Property to propagate read-only-ness to children. */
   virtual void setReadOnly(bool read_only);
@@ -74,31 +66,24 @@ public Q_SLOTS:
   void setQuaternion(const Eigen::Quaterniond &q);
   void setEulerAngles(double euler[3], bool normalize);
   void setEulerAngles(double e1, double e2, double e3, bool normalize);
-  /** select Euler axes from string, allowed values are "rpy", "ypr", x,y,z
-   *  r or s in front of x,y,z chooses application order,
-   *  i.e. with respect to rotated or fixed frame
-   */
-  void setEulerAxes(const QString &axes_spec);
+  void setEulerAxes(const QString &axes);
 
 private Q_SLOTS:
-  void updateFromChildren();
-  void emitAboutToChange();
+  void updateFromEuler(const Eigen::Quaterniond &q);
+  void updateFromQuaternion();
 
 Q_SIGNALS:
   void quaternionChanged(Eigen::Quaterniond q);
 
 private:
-  void updateAngles();
   void updateString();
 
-  Eigen::Quaterniond quaternion_;
-  QString   axes_string_;
-  uint      axes_[3]; // unit axis index for i-th rotation
-  bool      fixed_;
-  FloatProperty* euler_[3];
+  rviz::EulerProperty *euler_property_;
+  rviz::QuaternionProperty *quaternion_property_;
   bool ignore_child_updates_;
+  bool show_euler_string_;
 };
 
-} // end namespace rviz
+} // end namespace agni_tf_tools
 
-#endif // EULER_PROPERTY_H
+#endif // ROTATION_PROPERTY_H
