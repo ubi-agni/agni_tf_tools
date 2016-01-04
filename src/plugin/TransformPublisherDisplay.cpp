@@ -83,6 +83,8 @@ TransformPublisherDisplay::TransformPublisherDisplay()
 
   connect(translation_property_, SIGNAL(changed()), this, SLOT(onTransformChanged()));
   connect(rotation_property_, SIGNAL(quaternionChanged(Eigen::Quaterniond)), this, SLOT(onTransformChanged()));
+  connect(rotation_property_, SIGNAL(statusUpdate(int,QString,QString)),
+          this, SLOT(setStatus(int,QString,QString)));
   tf_pub_ = new TransformBroadcaster("", "", this);
 }
 
@@ -209,10 +211,18 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
   return true;
 }
 
+void TransformPublisherDisplay::setStatus(int level, const QString &name, const QString &text)
+{
+  if (level == rviz::StatusProperty::Ok && text.isEmpty())
+    Display::deleteStatus(name);
+  else
+    Display::setStatus(static_cast<rviz::StatusProperty::Level>(level), name, text);
+}
+
 void TransformPublisherDisplay::setStatusStd(rviz::StatusProperty::Level level,
                                              const std::string &name, const std::string &text)
 {
-  Display::setStatusStd(level, name, text);
+  setStatus(level, QString::fromStdString(name), QString::fromStdString(text));
 }
 
 void TransformPublisherDisplay::onFramesChanged()

@@ -73,7 +73,10 @@ private Q_SLOTS:
   void updateFromQuaternion();
 
 Q_SIGNALS:
+  /** signal emitted when quaternion value has changed */
   void quaternionChanged(Eigen::Quaterniond q);
+  /** signal emitted to indicate error status, e.g. to a rviz::Display */
+  void statusUpdate(int, const QString&, const QString&);
 
 private:
   void updateString();

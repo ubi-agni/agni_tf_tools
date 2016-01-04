@@ -48,9 +48,7 @@ class EulerProperty: public Property
 public:
   class invalid_axes : public std::invalid_argument {
   public:
-    invalid_axes();
-    invalid_axes(const std::string&msg);
-    invalid_axes(char axis);
+    invalid_axes(const std::string &msg);
   };
 
   EulerProperty(Property* parent = 0,
@@ -85,7 +83,10 @@ private Q_SLOTS:
   void emitAboutToChange();
 
 Q_SIGNALS:
+  /** signal emitted when quaternion value has changed */
   void quaternionChanged(Eigen::Quaterniond q);
+  /** signal emitted when there was an error, e.g. with Euler axes */
+  void statusUpdate(int, const QString&, const QString&);
 
 private:
   void updateAngles();

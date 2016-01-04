@@ -54,6 +54,9 @@ RotationProperty::RotationProperty(Property* parent, const QString& name,
           this, SLOT(updateFromEuler(Eigen::Quaterniond)));
   connect(quaternion_property_, SIGNAL(changed()),
           this, SLOT(updateFromQuaternion()));
+  // forward status signal from EulerProperty
+  connect(euler_property_, SIGNAL(statusUpdate(int,QString,QString)),
+          this, SIGNAL(statusUpdate(int,QString,QString)));
   updateString();
 }
 

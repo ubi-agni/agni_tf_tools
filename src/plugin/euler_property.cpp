@@ -31,6 +31,7 @@
 
 #include <QStringList>
 #include <rviz/properties/float_property.h>
+#include <rviz/properties/status_property.h>
 #include <angles/angles.h>
 #include <boost/format.hpp>
 #include <boost/assign/list_of.hpp>
@@ -39,18 +40,8 @@
 namespace rviz
 {
 
-EulerProperty::invalid_axes::invalid_axes() :
-  std::invalid_argument("invalid axes string: expecting 3 axis specs from x,y,z")
-{
-}
-
 EulerProperty::invalid_axes::invalid_axes(const std::string &msg) :
   std::invalid_argument(msg)
-{
-}
-
-EulerProperty::invalid_axes::invalid_axes(char axis) :
-  std::invalid_argument(boost::str(boost::format("invalid axis char: %c (only xyz allowed)") % axis))
 {
 }
 
@@ -146,14 +137,18 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
 
   // need to have 3 axes specs
   if (axes_spec.isEmpty() || strlen(pc) != 3)
-    throw invalid_axes();
+    throw invalid_axes((boost::format("Invalid axes spec: %s. Expecting 3 chars from [xyz]")
+                        % axes_spec.toStdString()).str());
 
   // parse axes specs into indexes
   uint axes[3];
   for (int i=0; i < 3; ++i) {
     int idx = pc[i] - 'x';
-    if (idx < 0 || idx > 2) throw invalid_axes(*pc);
-    if (i > 0 && axes[i-1] == idx) throw invalid_axes("consecutive axes need to be different");
+    if (idx < 0 || idx > 2)
+      throw invalid_axes((boost::format("invalid axis char: %c (only xyz allowed)")
+                          % pc[i]).str());
+    if (i > 0 && axes[i-1] == idx)
+      throw invalid_axes("consecutive axes need to be different");
     axes[i] = idx;
   }
 
@@ -171,6 +166,9 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
 
 bool EulerProperty::setValue(const QVariant& value)
 {
+  static const QString statusAxes ("Euler axes");
+  static const QString statusAngles ("Euler angles");
+
   const QRegExp axesSpec("\\s*([a-z]+)\\s*:?");
   QString s = value.toString();
 
@@ -178,21 +176,33 @@ bool EulerProperty::setValue(const QVariant& value)
   if (axesSpec.indexIn(s) != -1) {
     try {
       setEulerAxes(axesSpec.cap(1));
+      Q_EMIT statusUpdate(StatusProperty::Ok, statusAxes, axes_string_);
     } catch (const invalid_axes &e) {
+      Q_EMIT statusUpdate(StatusProperty::Warn, statusAxes, e.what());
       return false;
     }
     s = s.mid(axesSpec.matchedLength());
   }
   // parse angles
   QStringList strings = s.split(';');
-  if (strings.size() < 3) return false;
+  if (strings.size() < 3) {
+    if (!s.trimmed().isEmpty())
+      Q_EMIT statusUpdate(StatusProperty::Warn, statusAngles,
+                          "expecting 3 semicolon-separated values");
+    return false;
+  }
 
   double euler[3];
   bool ok = true;
   for (int i=0; i < 3 && ok; ++i)
     euler[i] = angles::from_degrees(strings[i].toDouble(&ok));
-  if (!ok) return false;
+  if (!ok) {
+    Q_EMIT statusUpdate(StatusProperty::Warn, statusAngles,
+                        "failed to parse angle value");
+    return false;
+  }
 
+  Q_EMIT statusUpdate(StatusProperty::Ok, statusAngles, "");
   setEulerAngles(euler, false);
 }
 

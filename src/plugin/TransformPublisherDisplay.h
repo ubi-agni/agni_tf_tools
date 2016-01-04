@@ -77,6 +77,7 @@ protected:
   bool fillPoseStamped(std_msgs::Header &header, geometry_msgs::Pose &pose);
 
 protected Q_SLOTS:
+  void setStatus(int level, const QString &name, const QString &text);
   void setStatusStd(StatusProperty::Level, const std::string &name, const std::string &text);
   void onFramesChanged();
   void onTransformChanged();
