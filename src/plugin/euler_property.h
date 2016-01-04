@@ -67,6 +67,7 @@ public:
 
   /** @brief Overridden from Property to propagate read-only-ness to children. */
   virtual void setReadOnly(bool read_only);
+  bool getAnglesReadOnly() {return angles_read_only_;}
 
 public Q_SLOTS:
   void setQuaternion(const Eigen::Quaterniond &q);
@@ -98,6 +99,7 @@ private:
   bool      fixed_;
   FloatProperty* euler_[3];
   bool ignore_child_updates_;
+  bool angles_read_only_;
 };
 
 } // end namespace rviz

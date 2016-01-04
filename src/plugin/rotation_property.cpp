@@ -121,6 +121,7 @@ void RotationProperty::setEulerAxes(const QString &axes_spec)
 bool RotationProperty::setValue(const QVariant& value)
 {
   // TODO: forward parsing to either Euler- or QuaternionProperty
+  return euler_property_->setValue(value);
 }
 
 void RotationProperty::updateString()

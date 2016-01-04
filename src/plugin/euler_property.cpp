@@ -57,6 +57,7 @@ EulerProperty::EulerProperty(Property* parent, const QString& name,
              parent, changed_slot, receiver)
   , quaternion_(value)
   , ignore_child_updates_(false)
+  , angles_read_only_(false)
 {
   euler_[0] = new FloatProperty("", 0, "rotation angle about first axis", this);
   euler_[1] = new FloatProperty("", 0, "rotation angle about second axis", this);
@@ -183,6 +184,13 @@ bool EulerProperty::setValue(const QVariant& value)
     }
     s = s.mid(axesSpec.matchedLength());
   }
+
+  // in read-only mode only allow to change axes, but not angles
+  if (angles_read_only_) {
+    Q_EMIT statusUpdate(StatusProperty::Warn, statusAngles, "read-only");
+    return true;
+  }
+
   // parse angles
   QStringList strings = s.split(';');
   if (strings.size() < 3) {
@@ -275,7 +283,9 @@ void EulerProperty::save(Config config) const
 
 void EulerProperty::setReadOnly(bool read_only)
 {
-  Property::setReadOnly(read_only);
+  // read-only mode should allow for changing axes, but not angles
+  angles_read_only_ = read_only;
+  // do not pass read-only to base class, but only to children
   for (int i=0; i < 3; ++i)
     euler_[i]->setReadOnly(read_only);
 }
