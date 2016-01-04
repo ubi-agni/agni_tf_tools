@@ -40,6 +40,7 @@
 #include <rviz/display_factory.h>
 #include <rviz/display_context.h>
 #include <rviz/default_plugin/interactive_markers/interactive_marker.h>
+#include <tf/transform_listener.h>
 
 namespace vm = visualization_msgs;
 
@@ -204,31 +205,48 @@ void TransformPublisherDisplay::onTransformChanged()
 {
   if (ignore_updates_) return;
 
-  const Eigen::Quaterniond &q = rotation_property_->getQuaternion();
-  const Ogre::Vector3 &p = translation_property_->getVector();
-
-  // update marker pose
   visualization_msgs::InteractiveMarkerPose marker_pose;
-  updatePose(marker_pose.pose, q, p);
-  marker_pose.header.frame_id = parent_frame_property_->getFrameStd();
-  marker_pose.header.stamp = ros::Time::now();
-  imarker_->processMessage(marker_pose);
+  fillPoseStamped(marker_pose.header, marker_pose.pose);
 
+  // update marker pose + broadcaster pose
+  imarker_->processMessage(marker_pose);
   tf_pub_->setPose(marker_pose.pose);
 }
 
-void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback &feedback)
+void TransformPublisherDisplay::onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback)
 {
   if (ignore_updates_) return;
+  if (feedback.event_type != vm::InteractiveMarkerFeedback::POSE_UPDATE) return;
 
-  const geometry_msgs::Point &p = feedback.pose.position;
-  const geometry_msgs::Quaternion &q = feedback.pose.orientation;
+  // convert to parent frame
+  const geometry_msgs::Point &p_in = feedback.pose.position;
+  const geometry_msgs::Quaternion &q_in = feedback.pose.orientation;
+
+  tf::Stamped<tf::Pose> pose_in(tf::Transform(tf::Quaternion(q_in.x, q_in.y, q_in.z, q_in.w),
+                                              tf::Vector3(p_in.x, p_in.y, p_in.z)),
+                                feedback.header.stamp, feedback.header.frame_id);
+  tf::Stamped<tf::Pose> pose_out;
+  try {
+    context_->getTFClient()->transformPose(parent_frame_property_->getFrameStd(),
+                                           pose_in, pose_out);
+  } catch(const std::runtime_error &e) {
+    ROS_DEBUG("Error transforming from frame '%s' to frame '%s': %s",
+              feedback.header.frame_id.c_str(),
+              parent_frame_property_->getFrameStd().c_str(),
+              e.what());
+    return;
+  }
+
+  const tf::Vector3 &p = pose_out.getOrigin();
+  const tf::Quaternion &q = pose_out.getRotation();
 
   ignore_updates_ = true;
-  translation_property_->setVector(Ogre::Vector3(p.x, p.y, p.z));
-  rotation_property_->setQuaternion(Eigen::Quaterniond(q.w, q.x, q.y, q.z));
+  translation_property_->setVector(Ogre::Vector3(p.x(), p.y(), p.z()));
+  rotation_property_->setQuaternion(Eigen::Quaterniond(q.w(), q.x(), q.y(), q.z()));
   ignore_updates_ = false;
 
+  updatePose(feedback.pose, rotation_property_->getQuaternion(),
+             translation_property_->getVector());
   tf_pub_->setPose(feedback.pose);
 }
 
