@@ -39,10 +39,12 @@
 #include <rviz/properties/tf_frame_property.h>
 #include <rviz/display_factory.h>
 #include <rviz/display_context.h>
+#include <rviz/frame_manager.h>
 #include <rviz/default_plugin/interactive_markers/interactive_marker.h>
 #include <tf/transform_listener.h>
 
 namespace vm = visualization_msgs;
+const std::string MARKER_NAME = "marker";
 
 namespace agni_tf_tools
 {
@@ -64,6 +66,7 @@ void static updatePose(geometry_msgs::Pose &pose,
 
 TransformPublisherDisplay::TransformPublisherDisplay()
   : rviz::Display()
+  , imarker_(NULL)
   , ignore_updates_(false)
 {
   translation_property_ = new rviz::VectorProperty("translation", Ogre::Vector3::ZERO, "", this);
@@ -93,15 +96,6 @@ void TransformPublisherDisplay::onInitialize()
   parent_frame_property_->setFrameManager(context_->getFrameManager());
   child_frame_property_->setFrameManager(context_->getFrameManager());
 
-  imarker_ = new rviz::InteractiveMarker(getSceneNode(), context_);
-  imarker_->processMessage(createInteractiveMarker());
-  imarker_->setShowAxes(false);
-  imarker_->setShowVisualAids(false);
-  imarker_->setShowDescription(false);
-
-  connect(imarker_, SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
-          this, SLOT(onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback&)));
-
   // show some children by default
   this->expand();
   broadcast_property_->expand();
@@ -125,15 +119,20 @@ void TransformPublisherDisplay::onDisable()
 void TransformPublisherDisplay::update(float wall_dt, float ros_dt)
 {
   Display::update(wall_dt, ros_dt);
-  imarker_->update(wall_dt); // get online marker updates
+  // create marker if not yet done
+  if (!imarker_ && !createInteractiveMarker())
+    setStatusStd(StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
+  else
+    imarker_->update(wall_dt); // get online marker updates
 }
 
-static visualization_msgs::Marker createArrowMarker(double scale,
-                                                    const Eigen::Vector3d &dir,
-                                                    const QColor &color) {
-  visualization_msgs::Marker marker;
 
-  marker.type = visualization_msgs::Marker::ARROW;
+static vm::Marker createArrowMarker(double scale,
+                                    const Eigen::Vector3d &dir,
+                                    const QColor &color) {
+  vm::Marker marker;
+
+  marker.type = vm::Marker::ARROW;
   marker.scale.x = scale;
   marker.scale.y = 0.1*scale;
   marker.scale.z = 0.1*scale;
@@ -149,36 +148,71 @@ static visualization_msgs::Marker createArrowMarker(double scale,
   return marker;
 }
 
-vm::InteractiveMarker TransformPublisherDisplay::createInteractiveMarker() const
+bool TransformPublisherDisplay::createInteractiveMarker()
 {
   float scale = 0.2;
 
-  visualization_msgs::InteractiveMarkerControl ctrl;
-  ctrl.orientation_mode = visualization_msgs::InteractiveMarkerControl::VIEW_FACING;
-  ctrl.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
+  vm::InteractiveMarker im;
+  im.name = MARKER_NAME;
+  im.scale = scale;
+  if (!fillPoseStamped(im.header, im.pose)) return false;
+
+  vm::InteractiveMarkerControl ctrl;
+  ctrl.orientation_mode = vm::InteractiveMarkerControl::VIEW_FACING;
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_ROTATE_3D;
   ctrl.independent_marker_orientation = true;
   ctrl.always_visible = true;
-  ctrl.name = "control";
+  ctrl.name = "drag control";
 
   ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitX(), QColor("red")));
   ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitY(), QColor("green")));
   ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitZ(), QColor("blue")));
 
-  vm::InteractiveMarker imarker;
-  fillPoseStamped(imarker.header, imarker.pose);
-  imarker.scale = scale;
-  imarker.controls.push_back(ctrl);
-  return imarker;
+  im.controls.push_back(ctrl);
+
+
+  if (imarker_) delete imarker_;
+  imarker_ = new rviz::InteractiveMarker(getSceneNode(), context_);
+  connect(imarker_, SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
+          this, SLOT(onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback&)));
+  connect(imarker_, SIGNAL(statusUpdate(StatusProperty::Level,std::string,std::string)),
+          this, SLOT(setStatusStd(StatusProperty::Level,std::string,std::string)));
+
+  setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
+  imarker_->processMessage(im);
+  imarker_->setShowVisualAids(false);
+  imarker_->setShowAxes(false);
+  imarker_->setShowDescription(false);
+
+  return true;
 }
 
-void TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
-                                                geometry_msgs::Pose &pose) const
+
+bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
+                                                geometry_msgs::Pose &pose)
 {
+  const std::string &parent_frame = parent_frame_property_->getFrameStd();
+  std::string error;
+  if (context_->getFrameManager()->transformHasProblems(parent_frame, ros::Time(), error))
+  {
+    setStatusStd(StatusProperty::Error, MARKER_NAME, error);
+    return false;
+  }
+  setStatusStd(StatusProperty::Ok, MARKER_NAME, "");
+
   const Eigen::Quaterniond &q = rotation_property_->getQuaternion();
   const Ogre::Vector3 &p = translation_property_->getVector();
   updatePose(pose, q, p);
-  header.frame_id = parent_frame_property_->getFrameStd();
-  header.stamp = ros::Time::now();
+  header.frame_id = parent_frame;
+  // frame-lock marker to update marker pose with frame updates
+  header.stamp = ros::Time();
+  return true;
+}
+
+void TransformPublisherDisplay::setStatusStd(rviz::StatusProperty::Level level,
+                                             const std::string &name, const std::string &text)
+{
+  Display::setStatusStd(level, name, text);
 }
 
 void TransformPublisherDisplay::onFramesChanged()
@@ -186,9 +220,9 @@ void TransformPublisherDisplay::onFramesChanged()
   if (ignore_updates_) return;
 
   // update marker pose
-  visualization_msgs::InteractiveMarkerPose marker_pose;
+  vm::InteractiveMarkerPose marker_pose;
   fillPoseStamped(marker_pose.header, marker_pose.pose);
-  imarker_->processMessage(marker_pose);
+  if (imarker_) imarker_->processMessage(marker_pose);
 
   // broadcast transform
   geometry_msgs::TransformStamped tf;
@@ -205,15 +239,15 @@ void TransformPublisherDisplay::onTransformChanged()
 {
   if (ignore_updates_) return;
 
-  visualization_msgs::InteractiveMarkerPose marker_pose;
+  vm::InteractiveMarkerPose marker_pose;
   fillPoseStamped(marker_pose.header, marker_pose.pose);
 
   // update marker pose + broadcaster pose
-  imarker_->processMessage(marker_pose);
+  if (imarker_) imarker_->processMessage(marker_pose);
   tf_pub_->setPose(marker_pose.pose);
 }
 
-void TransformPublisherDisplay::onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback)
+void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback &feedback)
 {
   if (ignore_updates_) return;
   if (feedback.event_type != vm::InteractiveMarkerFeedback::POSE_UPDATE) return;

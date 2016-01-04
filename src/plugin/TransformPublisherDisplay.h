@@ -33,7 +33,6 @@
 
 #include <rviz/display.h>
 #include <ros/ros.h>
-#include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -53,6 +52,8 @@ class TransformBroadcaster;
 
 namespace agni_tf_tools
 {
+// needed because rviz::InteractiveMarker::statusUpdate is declared without rviz namespace
+using rviz::StatusProperty;
 
 class RotationProperty;
 
@@ -72,10 +73,11 @@ protected:
   void onDisable();
   void update(float wall_dt, float ros_dt);
 
-  virtual visualization_msgs::InteractiveMarker createInteractiveMarker() const;
-  void fillPoseStamped(std_msgs::Header &header, geometry_msgs::Pose &pose) const;
+  bool createInteractiveMarker();
+  bool fillPoseStamped(std_msgs::Header &header, geometry_msgs::Pose &pose);
 
 protected Q_SLOTS:
+  void setStatusStd(StatusProperty::Level, const std::string &name, const std::string &text);
   void onFramesChanged();
   void onTransformChanged();
   void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback);
