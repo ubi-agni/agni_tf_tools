@@ -76,7 +76,14 @@ TransformPublisherDisplay::TransformPublisherDisplay()
 
   parent_frame_property_ = new rviz::TfFrameProperty(
         "parent frame", rviz::TfFrameProperty::FIXED_FRAME_STRING, "", this,
-        0, true, SLOT(onFramesChanged()), this);
+        0, true, SLOT(onRefFrameChanged()), this);
+  adapt_transform_property_ = new rviz::BoolProperty(
+        "adapt transformation", false,
+        "Adapt transformation when changing the parent frame? "
+        "If so, the marker will not move.", this,
+        SLOT(onAdaptTransformChanged()), this);
+  onAdaptTransformChanged();
+
   broadcast_property_ = new rviz::BoolProperty("publish transform", true, "", this,
                                                SLOT(onBroadcastEnableChanged()), this);
   child_frame_property_ = new rviz::TfFrameProperty(
@@ -241,10 +248,46 @@ void TransformPublisherDisplay::setStatusStd(rviz::StatusProperty::Level level,
   setStatus(level, QString::fromStdString(name), QString::fromStdString(text));
 }
 
+static bool getTransform(rviz::FrameManager &fm, const std::string &frame, Eigen::Affine3d &tf)
+{
+  Ogre::Vector3 p = Ogre::Vector3::ZERO;
+  Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
+
+  bool success = fm.getTransform(frame, ros::Time(), p, q);
+  tf = Eigen::Translation3d(p.x, p.y, p.z) * Eigen::Quaterniond(q.w, q.x, q.y, q.z);
+  return success || frame == rviz::TfFrameProperty::FIXED_FRAME_STRING.toStdString();
+}
+
+void TransformPublisherDisplay::onRefFrameChanged()
+{
+  // update pose to be relative to new reference frame
+  Eigen::Affine3d prevRef, nextRef;
+  rviz::FrameManager &fm = *context_->getFrameManager();
+  if (getTransform(fm, prev_parent_frame_, prevRef) &&
+      getTransform(fm, parent_frame_property_->getFrameStd(), nextRef)) {
+    const Ogre::Vector3 &p = translation_property_->getVector();
+    Eigen::Affine3d curPose = Eigen::Translation3d(p.x, p.y, p.z) * rotation_property_->getQuaternion();
+    Eigen::Affine3d newPose = nextRef.inverse() * prevRef * curPose;
+    Eigen::Vector3d t = newPose.translation();
+    ignore_updates_ = true;
+    translation_property_->setVector(Ogre::Vector3(t.x(), t.y(), t.z()));
+    rotation_property_->setQuaternion(Eigen::Quaterniond(newPose.rotation()));
+    ignore_updates_ = false;
+  }
+  onAdaptTransformChanged();
+  onFramesChanged();
+}
+
+void TransformPublisherDisplay::onAdaptTransformChanged()
+{
+  if (adapt_transform_property_->getBool())
+    prev_parent_frame_ = parent_frame_property_->getFrameStd();
+  else
+    prev_parent_frame_ = "";
+}
+
 void TransformPublisherDisplay::onFramesChanged()
 {
-  if (ignore_updates_) return;
-
   // update marker pose
   vm::InteractiveMarkerPose marker_pose;
   fillPoseStamped(marker_pose.header, marker_pose.pose);
@@ -268,8 +311,10 @@ void TransformPublisherDisplay::onTransformChanged()
   vm::InteractiveMarkerPose marker_pose;
   fillPoseStamped(marker_pose.header, marker_pose.pose);
 
-  // update marker pose + broadcaster pose
+  // update marker pose + broadcast pose
+  ignore_updates_ = true;
   if (imarker_) imarker_->processMessage(marker_pose);
+  ignore_updates_ = false;
   tf_pub_->setPose(marker_pose.pose);
 }
 

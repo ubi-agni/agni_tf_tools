@@ -79,6 +79,8 @@ protected:
 protected Q_SLOTS:
   void setStatus(int level, const QString &name, const QString &text);
   void setStatusStd(StatusProperty::Level, const std::string &name, const std::string &text);
+  void onRefFrameChanged();
+  void onAdaptTransformChanged();
   void onFramesChanged();
   void onTransformChanged();
   void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback);
@@ -87,11 +89,13 @@ protected Q_SLOTS:
   void onMarkerEnableChanged();
   void onMarkerScaleChanged();
 
-protected:
+private:
   rviz::VectorProperty *translation_property_;
   RotationProperty *rotation_property_;
   rviz::BoolProperty *broadcast_property_;
   rviz::TfFrameProperty *parent_frame_property_;
+  rviz::BoolProperty *adapt_transform_property_;
+  std::string prev_parent_frame_;
   rviz::TfFrameProperty *child_frame_property_;
   TransformBroadcaster *tf_pub_;
   rviz::BoolProperty *marker_property_;
