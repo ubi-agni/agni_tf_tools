@@ -213,9 +213,10 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
 
 void TransformPublisherDisplay::setStatus(int level, const QString &name, const QString &text)
 {
-  if (level == rviz::StatusProperty::Ok && text.isEmpty())
+  if (level == rviz::StatusProperty::Ok && text.isEmpty()) {
+    Display::setStatus(static_cast<rviz::StatusProperty::Level>(level), name, text);
     Display::deleteStatus(name);
-  else
+  } else
     Display::setStatus(static_cast<rviz::StatusProperty::Level>(level), name, text);
 }
 
