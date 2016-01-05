@@ -43,20 +43,21 @@ RotationProperty::RotationProperty(Property* parent, const QString& name,
    : StringProperty(name, "",
                     "Orientation specification using Euler angles or a quaternion.",
                     parent, changed_slot, receiver)
-   , ignore_child_updates_(false)
+   , ignore_quaternion_property_updates_(false)
    , show_euler_string_(true)
 {
   euler_property_ = new EulerProperty(this, "Euler angles", value);
   quaternion_property_ = new rviz::QuaternionProperty("quaternion",
                                                       Ogre::Quaternion(value.w(), value.x(), value.y(), value.z()),
                                                       "order: x, y, z, w", this);
-  connect(euler_property_, SIGNAL(quaternionChanged(Eigen::Quaterniond)),
-          this, SLOT(updateFromEuler(Eigen::Quaterniond)));
-  connect(quaternion_property_, SIGNAL(changed()),
-          this, SLOT(updateFromQuaternion()));
+  connect(euler_property_, SIGNAL(changed()), this, SLOT(updateFromEuler()));
+  connect(quaternion_property_, SIGNAL(changed()), this, SLOT(updateFromQuaternion()));
   // forward status signal from EulerProperty
   connect(euler_property_, SIGNAL(statusUpdate(int,QString,QString)),
           this, SIGNAL(statusUpdate(int,QString,QString)));
+  // forward quaternion updates
+  connect(euler_property_, SIGNAL(quaternionChanged(Eigen::Quaterniond)),
+          this, SIGNAL(quaternionChanged(Eigen::Quaterniond)));
   updateString();
 }
 
@@ -68,21 +69,17 @@ Eigen::Quaterniond RotationProperty::getQuaternion() const
 void RotationProperty::setQuaternion(const Eigen::Quaterniond& q)
 {
   if (getQuaternion().isApprox(q)) return;
-
-  ignore_child_updates_ = true;
-
+  // EulerProperty is considered "master".
+  // EulerProperty update will trigger QuaternionProperty update too
   euler_property_->setQuaternion(q);
-  quaternion_property_->setQuaternion(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-
-  ignore_child_updates_ = false;
 }
 
-void RotationProperty::updateFromEuler(const Eigen::Quaterniond &q)
+void RotationProperty::updateFromEuler()
 {
-  // EulerProperty is considered as "master". Need to update QuaternionProperty too.
+  const Eigen::Quaterniond q = euler_property_->getQuaternion();
+  ignore_quaternion_property_updates_ = true;
   quaternion_property_->setQuaternion(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-
-  if (ignore_child_updates_) return;
+  ignore_quaternion_property_updates_ = false;
   show_euler_string_ = true;
   updateString();
 }
@@ -90,7 +87,7 @@ void RotationProperty::updateFromEuler(const Eigen::Quaterniond &q)
 void RotationProperty::updateFromQuaternion()
 {
   // protect from infinite update loop
-  if (ignore_child_updates_) return;
+  if (ignore_quaternion_property_updates_) return;
 
   const Ogre::Quaternion &q = quaternion_property_->getQuaternion();
   Eigen::Quaternion<Ogre::Real> eigen_q(q.w, q.x, q.y, q.z);

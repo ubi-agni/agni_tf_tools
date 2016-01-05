@@ -69,7 +69,7 @@ public Q_SLOTS:
   void setEulerAxes(const QString &axes);
 
 private Q_SLOTS:
-  void updateFromEuler(const Eigen::Quaterniond &q);
+  void updateFromEuler();
   void updateFromQuaternion();
 
 Q_SIGNALS:
@@ -83,7 +83,7 @@ private:
 
   rviz::EulerProperty *euler_property_;
   rviz::QuaternionProperty *quaternion_property_;
-  bool ignore_child_updates_;
+  bool ignore_quaternion_property_updates_;
   bool show_euler_string_;
 };
 
