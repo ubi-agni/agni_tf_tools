@@ -82,7 +82,10 @@ protected Q_SLOTS:
   void onFramesChanged();
   void onTransformChanged();
   void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback);
-  void onBroadcastChanged();
+  void onBroadcastEnableChanged();
+  void hideMarker();
+  void onMarkerEnableChanged();
+  void onMarkerScaleChanged();
 
 protected:
   rviz::VectorProperty *translation_property_;
@@ -91,9 +94,12 @@ protected:
   rviz::TfFrameProperty *parent_frame_property_;
   rviz::TfFrameProperty *child_frame_property_;
   TransformBroadcaster *tf_pub_;
+  rviz::BoolProperty *marker_property_;
+  rviz::FloatProperty *marker_scale_property_;
 
   // interactive marker stuff
   rviz::InteractiveMarker *imarker_;
+  Ogre::SceneNode *marker_node_;
   bool ignore_updates_ ;
 };
 

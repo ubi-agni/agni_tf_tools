@@ -35,6 +35,7 @@
 
 #include <rviz/properties/string_property.h>
 #include <rviz/properties/bool_property.h>
+#include <rviz/properties/float_property.h>
 #include <rviz/properties/vector_property.h>
 #include <rviz/properties/tf_frame_property.h>
 #include <rviz/display_factory.h>
@@ -42,6 +43,7 @@
 #include <rviz/frame_manager.h>
 #include <rviz/default_plugin/interactive_markers/interactive_marker.h>
 #include <tf/transform_listener.h>
+#include <QDebug>
 
 namespace vm = visualization_msgs;
 const std::string MARKER_NAME = "marker";
@@ -76,7 +78,7 @@ TransformPublisherDisplay::TransformPublisherDisplay()
         "parent frame", rviz::TfFrameProperty::FIXED_FRAME_STRING, "", this,
         0, true, SLOT(onFramesChanged()), this);
   broadcast_property_ = new rviz::BoolProperty("publish transform", true, "", this,
-                                               SLOT(onBroadcastChanged()), this);
+                                               SLOT(onBroadcastEnableChanged()), this);
   child_frame_property_ = new rviz::TfFrameProperty(
         "child frame", "", "", broadcast_property_,
         0, false, SLOT(onFramesChanged()), this);
@@ -86,6 +88,12 @@ TransformPublisherDisplay::TransformPublisherDisplay()
   connect(rotation_property_, SIGNAL(statusUpdate(int,QString,QString)),
           this, SLOT(setStatus(int,QString,QString)));
   tf_pub_ = new TransformBroadcaster("", "", this);
+
+  marker_property_ = new rviz::BoolProperty("show marker", true, "show interactive marker", this,
+                                            SLOT(onMarkerEnableChanged()), this);
+  marker_scale_property_ = new rviz::FloatProperty("marker scale", 0.2, "", marker_property_,
+                                                   SLOT(onMarkerScaleChanged()), this);
+  marker_property_->hide(); // only show when marker is created
 }
 
 TransformPublisherDisplay::~TransformPublisherDisplay()
@@ -97,6 +105,7 @@ void TransformPublisherDisplay::onInitialize()
   Display::onInitialize();
   parent_frame_property_->setFrameManager(context_->getFrameManager());
   child_frame_property_->setFrameManager(context_->getFrameManager());
+  marker_node_ = getSceneNode()->createChildSceneNode();
 
   // show some children by default
   this->expand();
@@ -111,20 +120,25 @@ void TransformPublisherDisplay::reset()
 void TransformPublisherDisplay::onEnable()
 {
   Display::onEnable();
+  tf_pub_->setEnabled(true);
 }
 
 void TransformPublisherDisplay::onDisable()
 {
   Display::onDisable();
+  tf_pub_->setEnabled(false);
+  hideMarker();
 }
 
 void TransformPublisherDisplay::update(float wall_dt, float ros_dt)
 {
+  if (!this->isEnabled()) return;
+
   Display::update(wall_dt, ros_dt);
   // create marker if not yet done
-  if (!imarker_ && !createInteractiveMarker())
+  if (!imarker_ && marker_property_->getBool() && !createInteractiveMarker())
     setStatusStd(StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
-  else
+  else if (imarker_)
     imarker_->update(wall_dt); // get online marker updates
 }
 
@@ -152,7 +166,7 @@ static vm::Marker createArrowMarker(double scale,
 
 bool TransformPublisherDisplay::createInteractiveMarker()
 {
-  float scale = 0.2;
+  float scale = marker_scale_property_->getFloat();
 
   vm::InteractiveMarker im;
   im.name = MARKER_NAME;
@@ -174,7 +188,7 @@ bool TransformPublisherDisplay::createInteractiveMarker()
 
 
   if (imarker_) delete imarker_;
-  imarker_ = new rviz::InteractiveMarker(getSceneNode(), context_);
+  imarker_ = new rviz::InteractiveMarker(marker_node_, context_);
   connect(imarker_, SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
           this, SLOT(onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback&)));
   connect(imarker_, SIGNAL(statusUpdate(StatusProperty::Level,std::string,std::string)),
@@ -186,6 +200,7 @@ bool TransformPublisherDisplay::createInteractiveMarker()
   imarker_->setShowAxes(false);
   imarker_->setShowDescription(false);
 
+  marker_property_->show();
   return true;
 }
 
@@ -295,9 +310,32 @@ void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback &
   tf_pub_->setPose(feedback.pose);
 }
 
-void TransformPublisherDisplay::onBroadcastChanged()
+void TransformPublisherDisplay::onBroadcastEnableChanged()
 {
   tf_pub_->setEnabled(broadcast_property_->getBool());
+}
+
+void TransformPublisherDisplay::hideMarker() {
+  if (imarker_) {
+    delete imarker_;
+    imarker_ = NULL;
+  }
+}
+
+void TransformPublisherDisplay::onMarkerEnableChanged()
+{
+  if (marker_property_->getBool())
+    createInteractiveMarker();
+  else
+    hideMarker();
+}
+
+void TransformPublisherDisplay::onMarkerScaleChanged()
+{
+  if (marker_scale_property_->getFloat() <= 0)
+    marker_scale_property_->setFloat(0.2);
+  if (marker_property_->getBool())
+    createInteractiveMarker();
 }
 
 } // namespace agni_tf_tools
