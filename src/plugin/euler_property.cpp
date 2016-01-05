@@ -58,6 +58,7 @@ EulerProperty::EulerProperty(Property* parent, const QString& name,
   , quaternion_(value)
   , ignore_child_updates_(false)
   , angles_read_only_(false)
+  , update_string_(true)
 {
   euler_[0] = new FloatProperty("", 0, "rotation angle about first axis", this);
   euler_[1] = new FloatProperty("", 0, "rotation angle about second axis", this);
@@ -92,17 +93,23 @@ void EulerProperty::setEulerAngles(double euler[], bool normalize)
 
   if (normalize) setQuaternion(q);
   else {
-    if (!ignore_child_updates_) {
-      ignore_child_updates_ = true;
-      for (int i=0; i < 3; ++i)
-        euler_[i]->setValue(angles::to_degrees(euler[i]));
-      ignore_child_updates_ = false;
+    for (int i=0; i < 3; ++i) {
+      float deg = angles::to_degrees(euler[i]);
+      if (!Eigen::internal::isApprox(deg, euler_[i]->getFloat())) {
+        update_string_ = true;
+        if (!ignore_child_updates_)
+          euler_[i]->setValue(deg);
+      }
     }
 
-    Q_EMIT aboutToChange();
     if (!quaternion_.isApprox(q)) {
+      Q_EMIT aboutToChange();
       quaternion_ = q;
       Q_EMIT quaternionChanged(q);
+    } else if (update_string_) {
+      Q_EMIT aboutToChange();
+    } else { // there is nothing to update at all
+      return;
     }
     updateString();
     Q_EMIT changed();
@@ -162,6 +169,7 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   }
 
   // finally compute euler angles matching the new axes
+  update_string_ = true;
   updateAngles();
 }
 
@@ -251,6 +259,7 @@ void EulerProperty::updateString()
       .arg(euler_[1]->getFloat(), 0, 'f', 1)
       .arg(euler_[2]->getFloat(), 0, 'f', 1);
   value_ = s.replace(".0", "");
+  update_string_ = false; // reset update flag
 }
 
 void EulerProperty::load(const Config& config)
@@ -267,7 +276,7 @@ void EulerProperty::load(const Config& config)
     setEulerAxes(axes);
     for (int i=0; i < 3; ++i)
       euler[i] = angles::from_degrees(euler[i]);
-    setEulerAngles(euler[0], euler[1], euler[2], true);
+    setEulerAngles(euler[0], euler[1], euler[2], false);
   }
 }
 

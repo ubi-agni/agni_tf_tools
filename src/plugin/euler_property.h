@@ -100,6 +100,7 @@ private:
   FloatProperty* euler_[3];
   bool ignore_child_updates_;
   bool angles_read_only_;
+  bool update_string_; // do we have any changes triggering an updateString()?
 };
 
 } // end namespace rviz
