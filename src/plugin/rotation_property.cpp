@@ -68,18 +68,20 @@ Eigen::Quaterniond RotationProperty::getQuaternion() const
 
 void RotationProperty::setQuaternion(const Eigen::Quaterniond& q)
 {
-  if (getQuaternion().isApprox(q)) return;
+  Eigen::Quaterniond qn = q.normalized();
+  if (getQuaternion().isApprox(qn)) return;
   // EulerProperty is considered "master".
   // EulerProperty update will trigger QuaternionProperty update too
-  euler_property_->setQuaternion(q);
+  euler_property_->setQuaternion(qn);
 }
 
 void RotationProperty::updateFromEuler()
 {
   const Eigen::Quaterniond q = euler_property_->getQuaternion();
-  ignore_quaternion_property_updates_ = true;
-  quaternion_property_->setQuaternion(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-  ignore_quaternion_property_updates_ = false;
+  // do not update QuaternionProperty
+  if (!ignore_quaternion_property_updates_) {
+    quaternion_property_->setQuaternion(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+  }
   show_euler_string_ = true;
   updateString();
 }
@@ -95,7 +97,10 @@ void RotationProperty::updateFromQuaternion()
   // only update if changes are within accuracy range
   if (eigen_q.isApprox(getQuaternion().cast<Ogre::Real>())) return;
 
+  ignore_quaternion_property_updates_ = true;
   setQuaternion(eigen_q.cast<double>());
+  ignore_quaternion_property_updates_ = false;
+
   show_euler_string_ = false;
   updateString();
 }
