@@ -90,7 +90,7 @@ Q_SIGNALS:
   void statusUpdate(int, const QString&, const QString&);
 
 private:
-  void updateAngles();
+  void updateAngles(const Eigen::Quaterniond &q);
   void updateString();
 
   Eigen::Quaterniond quaternion_;

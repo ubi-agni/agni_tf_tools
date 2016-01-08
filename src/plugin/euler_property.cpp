@@ -74,9 +74,7 @@ EulerProperty::EulerProperty(Property* parent, const QString& name,
 void EulerProperty::setQuaternion(const Eigen::Quaterniond& q)
 {
   if (quaternion_.isApprox(q)) return;
-
-  quaternion_ = q;
-  updateAngles(); // this will also emit changed signals (in setEulerAngles)
+  updateAngles(q); // this will also emit changed signals (in setEulerAngles)
 }
 
 void EulerProperty::setEulerAngles(double euler[], bool normalize)
@@ -170,7 +168,7 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
 
   // finally compute euler angles matching the new axes
   update_string_ = true;
-  updateAngles();
+  updateAngles(quaternion_);
 }
 
 bool EulerProperty::setValue(const QVariant& value)
@@ -247,14 +245,14 @@ void EulerProperty::emitAboutToChange()
   Q_EMIT aboutToChange();
 }
 
-void EulerProperty::updateAngles()
+void EulerProperty::updateAngles(const Eigen::Quaterniond &q)
 {
   Eigen::Vector3d e;
   if (fixed_) {
-    e = quaternion_.matrix().eulerAngles(axes_[2], axes_[1], axes_[0]);
+    e = q.matrix().eulerAngles(axes_[2], axes_[1], axes_[0]);
     std::swap(e[0], e[2]);
   } else
-    e = quaternion_.matrix().eulerAngles(axes_[0], axes_[1], axes_[2]);
+    e = q.matrix().eulerAngles(axes_[0], axes_[1], axes_[2]);
   setEulerAngles(e.data(), false);
 }
 
