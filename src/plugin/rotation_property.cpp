@@ -117,7 +117,14 @@ void RotationProperty::setEulerAxes(const QString &axes_spec)
 
 bool RotationProperty::setValue(const QVariant& value)
 {
-  // TODO: forward parsing to either Euler- or QuaternionProperty
+  // forward parsing to either Quaternion- or EulerProperty
+  const QRegExp quatSpec("\\s*(quat:)?([^;]+;){3}");
+  QString s = value.toString();
+  if (quatSpec.indexIn(s) != -1)
+  {
+    s = s.mid(quatSpec.cap(1).length());
+    return quaternion_property_->setValue(s);
+  }
   return euler_property_->setValue(value);
 }
 

@@ -199,22 +199,29 @@ bool EulerProperty::setValue(const QVariant& value)
     return true;
   }
 
+  if (s.trimmed().isEmpty())
+    return true; // allow change of axes only
+
   // parse angles
   QStringList strings = s.split(';');
-  if (strings.size() < 3) {
-    if (!s.trimmed().isEmpty())
-      Q_EMIT statusUpdate(StatusProperty::Warn, statusAngles,
-                          "expecting 3 semicolon-separated values");
-    return false;
-  }
-
   double euler[3];
   bool ok = true;
   for (int i=0; i < 3 && ok; ++i)
-    euler[i] = angles::from_degrees(strings[i].toDouble(&ok));
-  if (!ok) {
+  {
+    if (i < strings.size())
+      euler[i] = angles::from_degrees(strings[i].toDouble(&ok));
+    else // providing a single value will set all angles to this (1st) value
+      euler[i] = euler[0];
+  }
+  if (!ok)
+  {
     Q_EMIT statusUpdate(StatusProperty::Warn, statusAngles,
                         "failed to parse angle value");
+    return false;
+  }
+  if (strings.size() != 3 && strings.size() != 1) {
+    Q_EMIT statusUpdate(StatusProperty::Warn, statusAngles,
+                        "expecting 3 semicolon-separated values");
     return false;
   }
 
