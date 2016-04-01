@@ -36,6 +36,7 @@
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
 #include <geometry_msgs/PoseStamped.h>
 
+// forward declarations of classes
 namespace rviz
 {
 class Property;
@@ -90,6 +91,7 @@ protected Q_SLOTS:
   void onMarkerScaleChanged();
 
 private:
+  // properties
   rviz::VectorProperty *translation_property_;
   RotationProperty *rotation_property_;
   rviz::BoolProperty *broadcast_property_;
@@ -97,9 +99,11 @@ private:
   rviz::BoolProperty *adapt_transform_property_;
   std::string prev_parent_frame_;
   rviz::TfFrameProperty *child_frame_property_;
-  TransformBroadcaster *tf_pub_;
   rviz::BoolProperty *marker_property_;
   rviz::FloatProperty *marker_scale_property_;
+
+  // tf publisher
+  TransformBroadcaster *tf_pub_;
 
   // interactive marker stuff
   rviz::InteractiveMarker *imarker_;

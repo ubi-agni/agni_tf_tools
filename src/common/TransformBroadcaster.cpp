@@ -61,7 +61,7 @@ void TransformBroadcaster::setPose(const geometry_msgs::Pose &pose)
   enabled_ = false;
 
   const geometry_msgs::Point &p = pose.position;
-  setPosition(pose.position.x, p.y, p.z);
+  setPosition(p.x, p.y, p.z);
 
   const geometry_msgs::Quaternion &q = pose.orientation;
   setQuaternion(q.x, q.y, q.z, q.w);
@@ -134,7 +134,8 @@ void TransformBroadcaster::send()
 
 void TransformBroadcaster::check()
 {
-  valid_ = !msg_.header.frame_id.empty() &&
+  valid_ =
+      !msg_.header.frame_id.empty() &&
       !msg_.child_frame_id.empty() &&
       msg_.header.frame_id != msg_.child_frame_id;
 }
