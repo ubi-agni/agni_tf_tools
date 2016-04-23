@@ -5,7 +5,13 @@ project(agni_tf_tools)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED roscpp tf2_ros rviz)
-find_package(Qt4 REQUIRED)
+if(rviz_QT_VERSION VERSION_LESS "5")
+	find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
+	include(${QT_USE_FILE})
+else()
+	find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
+	set(QT_LIBRARIES Qt5::Widgets)
+endif()
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 
@@ -115,7 +121,6 @@ catkin_package(
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 #############
 ## sub dir ##

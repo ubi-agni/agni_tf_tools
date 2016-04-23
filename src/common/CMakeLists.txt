@@ -1,4 +1,4 @@
-QT4_WRAP_UI(UI_SOURCES euler.ui transform.ui frames.ui)
+set(CMAKE_AUTOUIC ON)
 
 ## Declare a C++ executable
 add_library(${PROJECT_NAME} STATIC

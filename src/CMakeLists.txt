@@ -16,8 +16,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct cmake to run moc automatically when needed
 set(CMAKE_AUTOMOC ON)
 
-include_directories(${QT_HEADERS_DIR} ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR})
-
 add_subdirectory(common)
 include_directories(common)
 
@@ -29,7 +27,7 @@ target_link_libraries(${PROJECT_NAME}_static_transform_publisher_gui
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${PROJECT_NAME}
-  ${QT_QTGUI_LIBRARY} ${QT_QTCORE_LIBRARY}
+  ${QT_LIBRARIES}
 )
 set_target_properties(${PROJECT_NAME}_static_transform_publisher_gui
   PROPERTIES OUTPUT_NAME static_transform_publisher_gui
