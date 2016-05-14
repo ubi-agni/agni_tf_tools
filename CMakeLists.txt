@@ -5,6 +5,7 @@ project(agni_tf_tools)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED roscpp tf2_ros rviz)
+message(STATUS "Using Qt ${rviz_QT_VERSION}")
 if(rviz_QT_VERSION VERSION_LESS "5")
 	find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
 	include(${QT_USE_FILE})
