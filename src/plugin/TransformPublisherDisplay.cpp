@@ -304,8 +304,8 @@ void TransformPublisherDisplay::onFramesChanged()
 
   // finally update the tf publisher
   tf_pub_->setDisabled();
-  tf_pub_->setParentFrame(parent_frame_property_->getString());
-  tf_pub_->setChildFrame(child_frame_property_->getString());
+  tf_pub_->setParentFrame(parent_frame_property_->getFrame());
+  tf_pub_->setChildFrame(child_frame_property_->getFrame());
   tf_pub_->setEnabled(broadcast_property_->getBool());
   tf_pub_->setValue(tf);
 }
