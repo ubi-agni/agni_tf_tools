@@ -127,6 +127,8 @@ void TransformBroadcaster::setQuaternion(double x, double y, double z, double w)
 void TransformBroadcaster::send()
 {
   if (enabled_ && valid_) {
+    msg_.header.stamp = ros::Time::now();
+    ++msg_.header.seq;
     broadcaster_.sendTransform(msg_);
     ros::spinOnce();
   }
