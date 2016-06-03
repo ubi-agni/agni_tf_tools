@@ -295,18 +295,12 @@ void TransformPublisherDisplay::onFramesChanged()
 
   // prepare transform for broadcasting
   geometry_msgs::TransformStamped tf;
-  tf.header = marker_pose.header;
+  tf.header.frame_id = parent_frame_property_->getFrameStd();
   tf.child_frame_id = child_frame_property_->getFrameStd();
   tf.transform.translation.x = marker_pose.pose.position.x;
   tf.transform.translation.y = marker_pose.pose.position.y;
   tf.transform.translation.z = marker_pose.pose.position.z;
   tf.transform.rotation = marker_pose.pose.orientation;
-
-  // finally update the tf publisher
-  tf_pub_->setDisabled();
-  tf_pub_->setParentFrame(parent_frame_property_->getFrame());
-  tf_pub_->setChildFrame(child_frame_property_->getFrame());
-  tf_pub_->setEnabled(broadcast_property_->getBool());
   tf_pub_->setValue(tf);
 }
 

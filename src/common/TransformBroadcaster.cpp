@@ -41,7 +41,7 @@ TransformBroadcaster::TransformBroadcaster(const QString &parent_frame, const QS
   setChildFrame(child_frame);
 
   enabled_ = true;
-  send();
+  check(); send();
 }
 
 const geometry_msgs::TransformStamped &TransformBroadcaster::value() const
@@ -52,7 +52,7 @@ const geometry_msgs::TransformStamped &TransformBroadcaster::value() const
 void TransformBroadcaster::setValue(const geometry_msgs::TransformStamped &tf)
 {
   msg_ = tf;
-  send();
+  check(); send();
 }
 
 void TransformBroadcaster::setPose(const geometry_msgs::Pose &pose)
@@ -78,6 +78,7 @@ bool TransformBroadcaster::enabled() const
 void TransformBroadcaster::setEnabled(bool bEnabled)
 {
   enabled_ = bEnabled;
+  check(); send();
 }
 
 void TransformBroadcaster::setDisabled(bool bDisabled)
