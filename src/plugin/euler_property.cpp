@@ -129,8 +129,11 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   if (axes_string_ == axes_spec) return;
   QString sAxes = axes_spec;
   if (sAxes == "rpy") {
-    sAxes = "sxyz";
-    //    names = &rpyNames;
+    sAxes = "szyx";
+    names = &rpyNames;
+  } else if (sAxes == "ypr") {
+    sAxes = "rzyx";
+    names = &rpyNames;
   }
 
   // static or rotated frame order?
