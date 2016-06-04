@@ -163,7 +163,7 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   fixed_ = fixed;
   for (int i=0; i < 3; ++i) {
     axes_[i] = axes[i];
-    euler_[i]->setName((*names)[axes[i]]);
+    euler_[i]->setName((*names)[axes[fixed ? 2-i : i]]);
   }
 
   // finally compute euler angles matching the new axes
