@@ -137,7 +137,7 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   }
 
   // static or rotated frame order?
-  const char* pc = sAxes.toLatin1().constData();
+  QString::iterator pc = sAxes.begin();
   bool fixed;
   if (*pc == 's') fixed = true;
   else if (*pc == 'r') fixed = false;
@@ -145,17 +145,16 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   ++pc; // advance to first axis char
 
   // need to have 3 axes specs
-  if (axes_spec.isEmpty() || strlen(pc) != 3)
+  if (sAxes.end() - pc != 3)
     throw invalid_axes((boost::format("Invalid axes spec: %s. Expecting 3 chars from [xyz]")
                         % axes_spec.toStdString()).str());
 
   // parse axes specs into indexes
   uint axes[3];
-  for (int i=0; i < 3; ++i) {
-    int idx = pc[i] - 'x';
+  for (int i=0; i < 3; ++i, ++pc) {
+    int idx = pc->toLatin1() - 'x';
     if (idx < 0 || idx > 2)
-      throw invalid_axes((boost::format("invalid axis char: %c (only xyz allowed)")
-                          % pc[i]).str());
+      throw invalid_axes((boost::format("invalid axis char: %c (only xyz allowed)") % pc->unicode()).str());
     if (i > 0 && axes[i-1] == idx)
       throw invalid_axes("consecutive axes need to be different");
     axes[i] = idx;
