@@ -7,19 +7,18 @@ project(agni_tf_tools)
 find_package(catkin REQUIRED roscpp tf2_ros rviz)
 message(STATUS "Using Qt ${rviz_QT_VERSION}")
 if(rviz_QT_VERSION VERSION_LESS "5")
-	find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
+	find_package(Qt4 ${rviz_QT_VERSION} REQUIRED QtCore QtGui)
 	include(${QT_USE_FILE})
 else()
-	find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
+	find_package(Qt5 ${rviz_QT_VERSION} REQUIRED Core Widgets)
 	set(QT_LIBRARIES Qt5::Widgets)
 endif()
-find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS program_options)
 
-include_directories(${EIGEN_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
