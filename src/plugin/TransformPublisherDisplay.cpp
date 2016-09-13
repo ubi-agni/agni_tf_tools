@@ -181,6 +181,7 @@ bool TransformPublisherDisplay::createInteractiveMarker()
   if (!fillPoseStamped(im.header, im.pose)) return false;
 
   vm::InteractiveMarkerControl ctrl;
+  ctrl.orientation.w = 1.0;
   ctrl.orientation_mode = vm::InteractiveMarkerControl::VIEW_FACING;
   ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_ROTATE_3D;
   ctrl.independent_marker_orientation = true;
@@ -192,7 +193,6 @@ bool TransformPublisherDisplay::createInteractiveMarker()
   ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitZ(), QColor("blue")));
 
   im.controls.push_back(ctrl);
-
 
   if (imarker_) delete imarker_;
   imarker_ = new rviz::InteractiveMarker(marker_node_, context_);
