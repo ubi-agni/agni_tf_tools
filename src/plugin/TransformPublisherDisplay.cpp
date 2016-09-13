@@ -68,7 +68,6 @@ void static updatePose(geometry_msgs::Pose &pose,
 
 TransformPublisherDisplay::TransformPublisherDisplay()
   : rviz::Display()
-  , imarker_(NULL)
   , ignore_updates_(false)
 {
   translation_property_ = new rviz::VectorProperty("translation", Ogre::Vector3::ZERO, "", this);
@@ -194,11 +193,10 @@ bool TransformPublisherDisplay::createInteractiveMarker()
 
   im.controls.push_back(ctrl);
 
-  if (imarker_) delete imarker_;
-  imarker_ = new rviz::InteractiveMarker(marker_node_, context_);
-  connect(imarker_, SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
+  imarker_.reset(new rviz::InteractiveMarker(marker_node_, context_));
+  connect(imarker_.get(), SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
           this, SLOT(onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback&)));
-  connect(imarker_, SIGNAL(statusUpdate(StatusProperty::Level,std::string,std::string)),
+  connect(imarker_.get(), SIGNAL(statusUpdate(StatusProperty::Level,std::string,std::string)),
           this, SLOT(setStatusStd(StatusProperty::Level,std::string,std::string)));
 
   setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
@@ -361,10 +359,8 @@ void TransformPublisherDisplay::onBroadcastEnableChanged()
 }
 
 void TransformPublisherDisplay::hideMarker() {
-  if (imarker_) {
-    delete imarker_;
-    imarker_ = NULL;
-  }
+  if (imarker_)
+    imarker_.reset();
 }
 
 void TransformPublisherDisplay::onMarkerEnableChanged()

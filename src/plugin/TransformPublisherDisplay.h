@@ -106,7 +106,7 @@ private:
   TransformBroadcaster *tf_pub_;
 
   // interactive marker stuff
-  rviz::InteractiveMarker *imarker_;
+  boost::shared_ptr<rviz::InteractiveMarker> imarker_;
   Ogre::SceneNode *marker_node_;
   bool ignore_updates_ ;
 };
