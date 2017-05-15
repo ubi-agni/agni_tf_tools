@@ -53,7 +53,7 @@ EulerProperty::EulerProperty(Property* parent, const QString& name,
              "Angles specified in degrees.\n"
              "Choose axes with spec like xyz, zxz, or rpy.\n"
              "Composition w.r.t. the static or rotating frame\n"
-             "is selected by prefixing with 's' or 'r'.",
+             "is selected by prefixing with 's' or 'r' (default).",
              parent, changed_slot, receiver)
   , quaternion_(value)
   , ignore_child_updates_(false)
@@ -129,7 +129,7 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   if (axes_string_ == axes_spec) return;
   QString sAxes = axes_spec;
   if (sAxes == "rpy") {
-    sAxes = "szyx";
+    sAxes = "sxyz";
     names = &rpyNames;
   } else if (sAxes == "ypr") {
     sAxes = "rzyx";
@@ -165,7 +165,7 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
   fixed_ = fixed;
   for (int i=0; i < 3; ++i) {
     axes_[i] = axes[i];
-    euler_[i]->setName((*names)[axes[fixed ? 2-i : i]]);
+    euler_[i]->setName((*names)[axes[i]]);
   }
 
   // finally compute euler angles matching the new axes
