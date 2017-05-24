@@ -33,6 +33,7 @@
 
 #include <rviz/display.h>
 #include <ros/ros.h>
+#include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -45,6 +46,7 @@ class BoolProperty;
 class FloatProperty;
 class VectorProperty;
 class TfFrameProperty;
+class EnumProperty;
 
 class InteractiveMarker;
 }
@@ -74,7 +76,9 @@ protected:
   void onDisable();
   void update(float wall_dt, float ros_dt);
 
-  bool createInteractiveMarker();
+  void addFrameControls(visualization_msgs::InteractiveMarker &im, double scale, bool interactive);
+  void add6DOFControls(visualization_msgs::InteractiveMarker &im);
+  bool createInteractiveMarker(int type);
   bool fillPoseStamped(std_msgs::Header &header, geometry_msgs::Pose &pose);
 
 protected Q_SLOTS:
@@ -86,8 +90,7 @@ protected Q_SLOTS:
   void onTransformChanged();
   void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback);
   void onBroadcastEnableChanged();
-  void hideMarker();
-  void onMarkerEnableChanged();
+  void onMarkerTypeChanged();
   void onMarkerScaleChanged();
 
 private:
@@ -99,7 +102,7 @@ private:
   rviz::BoolProperty *adapt_transform_property_;
   std::string prev_parent_frame_;
   rviz::TfFrameProperty *child_frame_property_;
-  rviz::BoolProperty *marker_property_;
+  rviz::EnumProperty *marker_property_;
   rviz::FloatProperty *marker_scale_property_;
 
   // tf publisher

@@ -38,15 +38,20 @@
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/vector_property.h>
 #include <rviz/properties/tf_frame_property.h>
+#include <rviz/properties/enum_property.h>
+
 #include <rviz/display_factory.h>
 #include <rviz/display_context.h>
 #include <rviz/frame_manager.h>
 #include <rviz/default_plugin/interactive_markers/interactive_marker.h>
+#include <interactive_markers/tools.h>
 #include <tf/transform_listener.h>
 #include <QDebug>
 
 namespace vm = visualization_msgs;
 const std::string MARKER_NAME = "marker";
+
+enum MARKER_TYPE { NONE, FRAME, IFRAME, DOF6 };
 
 namespace agni_tf_tools
 {
@@ -95,8 +100,13 @@ TransformPublisherDisplay::TransformPublisherDisplay()
           this, SLOT(setStatus(int,QString,QString)));
   tf_pub_ = new TransformBroadcaster("", "", this);
 
-  marker_property_ = new rviz::BoolProperty("show marker", true, "show interactive marker", this,
-                                            SLOT(onMarkerEnableChanged()), this);
+  marker_property_ = new rviz::EnumProperty("marker type", "interactive frame", "Choose which type of interactive marker to show",
+                                            this, SLOT(onMarkerTypeChanged()), this);
+  marker_property_->addOption("none", NONE);
+  marker_property_->addOption("static frame", FRAME);
+  marker_property_->addOption("interactive frame", IFRAME);
+  marker_property_->addOption("6 DoF handles", DOF6);
+
   marker_scale_property_ = new rviz::FloatProperty("marker scale", 0.2, "", marker_property_,
                                                    SLOT(onMarkerScaleChanged()), this);
   marker_property_->hide(); // only show when marker is created
@@ -133,7 +143,7 @@ void TransformPublisherDisplay::onDisable()
 {
   Display::onDisable();
   tf_pub_->setEnabled(false);
-  hideMarker();
+  createInteractiveMarker(NONE);
 }
 
 void TransformPublisherDisplay::update(float wall_dt, float ros_dt)
@@ -142,7 +152,8 @@ void TransformPublisherDisplay::update(float wall_dt, float ros_dt)
 
   Display::update(wall_dt, ros_dt);
   // create marker if not yet done
-  if (!imarker_ && marker_property_->getBool() && !createInteractiveMarker())
+  if (!imarker_ && marker_property_->getOptionInt() != NONE &&
+      !createInteractiveMarker(marker_property_->getOptionInt()))
     setStatusStd(StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
   else if (imarker_)
     imarker_->update(wall_dt); // get online marker updates
@@ -170,8 +181,69 @@ static vm::Marker createArrowMarker(double scale,
   return marker;
 }
 
-bool TransformPublisherDisplay::createInteractiveMarker()
+inline void setOrientation(geometry_msgs::Quaternion &q, double w, double x, double y, double z) {
+  q.w = w;
+  q.x = x;
+  q.y = y;
+  q.z = z;
+}
+
+void TransformPublisherDisplay::addFrameControls(vm::InteractiveMarker &im, double scale, bool interactive)
 {
+  vm::InteractiveMarkerControl ctrl;
+  setOrientation(ctrl.orientation, 1, 0,0,0);
+  ctrl.always_visible = true;
+  if (interactive) {
+    ctrl.orientation_mode = vm::InteractiveMarkerControl::VIEW_FACING;
+    ctrl.independent_marker_orientation = true;
+    ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_ROTATE_3D;
+  }
+  ctrl.name = "frame";
+
+  ctrl.markers.push_back(createArrowMarker(im.scale * scale, Eigen::Vector3d::UnitX(), QColor("red")));
+  ctrl.markers.push_back(createArrowMarker(im.scale * scale, Eigen::Vector3d::UnitY(), QColor("green")));
+  ctrl.markers.push_back(createArrowMarker(im.scale * scale, Eigen::Vector3d::UnitZ(), QColor("blue")));
+
+  im.controls.push_back(ctrl);
+}
+
+void TransformPublisherDisplay::add6DOFControls(vm::InteractiveMarker &im) {
+  vm::InteractiveMarkerControl ctrl;
+  ctrl.always_visible = false;
+
+  setOrientation(ctrl.orientation, 1, 1,0,0);
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_AXIS;
+  ctrl.name = "x pos";
+  im.controls.push_back(ctrl);
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::ROTATE_AXIS;
+  ctrl.name = "x rot";
+  im.controls.push_back(ctrl);
+
+  setOrientation(ctrl.orientation, 1, 0,1,0);
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_AXIS;
+  ctrl.name = "y pos";
+  im.controls.push_back(ctrl);
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::ROTATE_AXIS;
+  ctrl.name = "y rot";
+  im.controls.push_back(ctrl);
+
+  setOrientation(ctrl.orientation, 1, 0,0,1);
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_AXIS;
+  ctrl.name = "z pos";
+  im.controls.push_back(ctrl);
+  ctrl.interaction_mode = vm::InteractiveMarkerControl::ROTATE_AXIS;
+  ctrl.name = "z rot";
+  im.controls.push_back(ctrl);
+}
+
+bool TransformPublisherDisplay::createInteractiveMarker(int type)
+{
+  if (type == NONE) {
+    if (imarker_)
+      imarker_.reset();
+    return true;
+  }
+
   float scale = marker_scale_property_->getFloat();
 
   vm::InteractiveMarker im;
@@ -179,19 +251,12 @@ bool TransformPublisherDisplay::createInteractiveMarker()
   im.scale = scale;
   if (!fillPoseStamped(im.header, im.pose)) return false;
 
-  vm::InteractiveMarkerControl ctrl;
-  ctrl.orientation.w = 1.0;
-  ctrl.orientation_mode = vm::InteractiveMarkerControl::VIEW_FACING;
-  ctrl.interaction_mode = vm::InteractiveMarkerControl::MOVE_ROTATE_3D;
-  ctrl.independent_marker_orientation = true;
-  ctrl.always_visible = true;
-  ctrl.name = "drag control";
-
-  ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitX(), QColor("red")));
-  ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitY(), QColor("green")));
-  ctrl.markers.push_back(createArrowMarker(scale, Eigen::Vector3d::UnitZ(), QColor("blue")));
-
-  im.controls.push_back(ctrl);
+  if (type == FRAME || type == IFRAME)
+    addFrameControls(im, 1.0, type == IFRAME);
+  else if (type == DOF6) {
+    addFrameControls(im, 0.5, type == IFRAME);
+    add6DOFControls(im);
+  }
 
   imarker_.reset(new rviz::InteractiveMarker(marker_node_, context_));
   connect(imarker_.get(), SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
@@ -200,6 +265,10 @@ bool TransformPublisherDisplay::createInteractiveMarker()
           this, SLOT(setStatusStd(StatusProperty::Level,std::string,std::string)));
 
   setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
+
+  // fill in default controls
+  interactive_markers::autoComplete(im, true);
+
   imarker_->processMessage(im);
   imarker_->setShowVisualAids(false);
   imarker_->setShowAxes(false);
@@ -358,25 +427,16 @@ void TransformPublisherDisplay::onBroadcastEnableChanged()
   tf_pub_->setEnabled(broadcast_property_->getBool());
 }
 
-void TransformPublisherDisplay::hideMarker() {
-  if (imarker_)
-    imarker_.reset();
-}
-
-void TransformPublisherDisplay::onMarkerEnableChanged()
+void TransformPublisherDisplay::onMarkerTypeChanged()
 {
-  if (marker_property_->getBool())
-    createInteractiveMarker();
-  else
-    hideMarker();
+  createInteractiveMarker(marker_property_->getOptionInt());
 }
 
 void TransformPublisherDisplay::onMarkerScaleChanged()
 {
   if (marker_scale_property_->getFloat() <= 0)
     marker_scale_property_->setFloat(0.2);
-  if (marker_property_->getBool())
-    createInteractiveMarker();
+  createInteractiveMarker(marker_property_->getOptionInt());
 }
 
 } // namespace agni_tf_tools
