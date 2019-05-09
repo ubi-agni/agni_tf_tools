@@ -40,7 +40,7 @@
 int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "static_transform_publisher_gui",
-            ros::init_options::AnonymousName ||
+            ros::init_options::AnonymousName |
             ros::init_options::NoSigintHandler);
   QApplication app(argc, argv);
 

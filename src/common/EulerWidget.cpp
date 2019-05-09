@@ -43,7 +43,7 @@ static void disableAxis(QComboBox *w, unsigned int axis) {
     QStandardItem* item = model->item(i);
     if (i == axis) {
       item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
-      if (w->currentIndex() == axis) w->setCurrentIndex((axis+1) % 3);
+      if (w->currentIndex() == static_cast<int>(axis)) w->setCurrentIndex((axis+1) % 3);
     } else {
       item->setFlags(item->flags() | Qt::ItemIsEnabled);
     }
@@ -148,9 +148,9 @@ void EulerWidget::setEulerAngles(double e1, double e2, double e3, bool normalize
 void EulerWidget::setEulerAxes(uint a1, uint a2, uint a3)
 {
   if (a1 > 2 || a2 > 2 || a3 > 2) return;
-  if (a1 == ui_->a1->currentIndex() &&
-      a2 == ui_->a2->currentIndex() &&
-      a3 == ui_->a3->currentIndex()) return;
+  if (static_cast<int>(a1) == ui_->a1->currentIndex() &&
+      static_cast<int>(a2) == ui_->a2->currentIndex() &&
+      static_cast<int>(a3) == ui_->a3->currentIndex()) return;
 
   this->blockSignals(true);
   ui_->a3->setCurrentIndex(a3);

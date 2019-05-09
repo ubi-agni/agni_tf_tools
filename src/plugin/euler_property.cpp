@@ -151,11 +151,11 @@ void EulerProperty::setEulerAxes(const QString &axes_spec)
 
   // parse axes specs into indexes
   uint axes[3];
-  for (int i=0; i < 3; ++i, ++pc) {
+  for (uint i=0; i < 3; ++i, ++pc) {
     int idx = pc->toLatin1() - 'x';
     if (idx < 0 || idx > 2)
       throw invalid_axes((boost::format("invalid axis char: %c (only xyz allowed)") % pc->unicode()).str());
-    if (i > 0 && axes[i-1] == idx)
+    if (i > 0 && axes[i-1] == static_cast<uint>(idx))
       throw invalid_axes("consecutive axes need to be different");
     axes[i] = idx;
   }
@@ -227,6 +227,7 @@ bool EulerProperty::setValue(const QVariant& value)
 
   Q_EMIT statusUpdate(StatusProperty::Ok, statusAngles, "");
   setEulerAngles(euler, false);
+  return true;
 }
 
 void EulerProperty::updateFromChildren()
