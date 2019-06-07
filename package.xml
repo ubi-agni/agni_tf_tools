@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>agni_tf_tools</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>
   This package provides a gui program as well as a rviz plugin to publish static transforms.
   Both support the transformation between various Euler angle representations.
