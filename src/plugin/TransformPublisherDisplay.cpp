@@ -45,7 +45,7 @@
 #include <rviz/frame_manager.h>
 #include <rviz/default_plugin/interactive_markers/interactive_marker.h>
 #include <interactive_markers/tools.h>
-#include <tf/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <QDebug>
 
 namespace vm = visualization_msgs;
@@ -390,17 +390,12 @@ void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback &
   if (ignore_updates_) return;
   if (feedback.event_type != vm::InteractiveMarkerFeedback::POSE_UPDATE) return;
 
-  // convert to parent frame
-  const geometry_msgs::Point &p_in = feedback.pose.position;
-  const geometry_msgs::Quaternion &q_in = feedback.pose.orientation;
-
-  tf::Stamped<tf::Pose> pose_in(tf::Transform(tf::Quaternion(q_in.x, q_in.y, q_in.z, q_in.w),
-                                              tf::Vector3(p_in.x, p_in.y, p_in.z)),
-                                feedback.header.stamp, feedback.header.frame_id);
-  tf::Stamped<tf::Pose> pose_out;
+  // convert feedpack.pose to parent frame
+  geometry_msgs::Pose pose;
   try {
-    context_->getTFClient()->transformPose(parent_frame_property_->getFrameStd(),
-                                           pose_in, pose_out);
+    tf2::doTransform(feedback.pose, pose,
+                     context_->getTF2BufferPtr()->lookupTransform(parent_frame_property_->getFrameStd(),
+                                                                  feedback.header.frame_id, feedback.header.stamp));
   } catch(const std::runtime_error &e) {
     ROS_DEBUG("Error transforming from frame '%s' to frame '%s': %s",
               feedback.header.frame_id.c_str(),
@@ -409,12 +404,12 @@ void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback &
     return;
   }
 
-  const tf::Vector3 &p = pose_out.getOrigin();
-  const tf::Quaternion &q = pose_out.getRotation();
+  const geometry_msgs::Point &p = pose.position;
+  const geometry_msgs::Quaternion &q = pose.orientation;
 
   ignore_updates_ = true;
-  translation_property_->setVector(Ogre::Vector3(p.x(), p.y(), p.z()));
-  rotation_property_->setQuaternion(Eigen::Quaterniond(q.w(), q.x(), q.y(), q.z()));
+  translation_property_->setVector(Ogre::Vector3(p.x, p.y, p.z));
+  rotation_property_->setQuaternion(Eigen::Quaterniond(q.w, q.x, q.y, q.z));
   ignore_updates_ = false;
 
   updatePose(feedback.pose, rotation_property_->getQuaternion(),
