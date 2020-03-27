@@ -110,7 +110,6 @@ private:
 
   // interactive marker stuff
   boost::shared_ptr<rviz::InteractiveMarker> imarker_;
-  Ogre::SceneNode *marker_node_;
   bool ignore_updates_ ;
 };
 

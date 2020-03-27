@@ -122,7 +122,6 @@ void TransformPublisherDisplay::onInitialize()
   Display::onInitialize();
   parent_frame_property_->setFrameManager(context_->getFrameManager());
   child_frame_property_->setFrameManager(context_->getFrameManager());
-  marker_node_ = getSceneNode()->createChildSceneNode();
 
   // show some children by default
   this->expand();
@@ -259,7 +258,7 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type)
     add6DOFControls(im);
   }
 
-  imarker_.reset(new rviz::InteractiveMarker(marker_node_, context_));
+  imarker_.reset(new rviz::InteractiveMarker(getSceneNode(), context_));
   connect(imarker_.get(), SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
           this, SLOT(onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback&)));
   connect(imarker_.get(), SIGNAL(statusUpdate(StatusProperty::Level,std::string,std::string)),
