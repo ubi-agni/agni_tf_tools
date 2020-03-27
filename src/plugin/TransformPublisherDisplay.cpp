@@ -99,6 +99,7 @@ TransformPublisherDisplay::TransformPublisherDisplay()
   connect(rotation_property_, SIGNAL(statusUpdate(int,QString,QString)),
           this, SLOT(setStatus(int,QString,QString)));
   tf_pub_ = new TransformBroadcaster("", "", this);
+  tf_pub_->setEnabled(false); // only enable with display
 
   marker_property_ = new rviz::EnumProperty("marker type", "interactive frame", "Choose which type of interactive marker to show",
                                             this, SLOT(onMarkerTypeChanged()), this);
@@ -136,13 +137,13 @@ void TransformPublisherDisplay::reset()
 void TransformPublisherDisplay::onEnable()
 {
   Display::onEnable();
-  tf_pub_->setEnabled(true);
+  onBroadcastEnableChanged();
 }
 
 void TransformPublisherDisplay::onDisable()
 {
   Display::onDisable();
-  tf_pub_->setEnabled(false);
+  onBroadcastEnableChanged();
   createInteractiveMarker(NONE);
 }
 
@@ -238,7 +239,7 @@ void TransformPublisherDisplay::add6DOFControls(vm::InteractiveMarker &im) {
 
 bool TransformPublisherDisplay::createInteractiveMarker(int type)
 {
-  if (type == NONE) {
+  if (type == NONE || !isEnabled()) {
     if (imarker_)
       imarker_.reset();
     return true;
@@ -424,7 +425,7 @@ void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback &
 
 void TransformPublisherDisplay::onBroadcastEnableChanged()
 {
-  tf_pub_->setEnabled(broadcast_property_->getBool());
+  tf_pub_->setEnabled(isEnabled() && broadcast_property_->getBool());
 }
 
 void TransformPublisherDisplay::onMarkerTypeChanged()
