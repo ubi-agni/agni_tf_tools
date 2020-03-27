@@ -68,13 +68,13 @@ public:
   TransformPublisherDisplay();
   ~TransformPublisherDisplay();
 
-  void reset();
+  void reset() override;
 
 protected:
-  void onInitialize();
-  void onEnable();
-  void onDisable();
-  void update(float wall_dt, float ros_dt);
+  void onInitialize() override;
+  void onEnable() override;
+  void onDisable() override;
+  void update(float wall_dt, float ros_dt) override;
 
   void addFrameControls(visualization_msgs::InteractiveMarker &im, double scale, bool interactive);
   void add6DOFControls(visualization_msgs::InteractiveMarker &im);

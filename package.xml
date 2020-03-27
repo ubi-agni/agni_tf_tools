@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<package>
+<package format="2">
   <name>agni_tf_tools</name>
   <version>0.1.3</version>
   <description>
@@ -30,17 +29,13 @@
   <!-- Dependencies can be catkin packages or system dependencies -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <!-- Use build_depend for packages required at compile time: -->
-  <build_depend>roscpp</build_depend>
-  <build_depend>tf2_ros</build_depend>
-  <build_depend>rviz</build_depend>
   <build_depend>qtbase5-dev</build_depend>
   <build_depend>eigen</build_depend>
 
-  <!-- Use run_depend for packages you need at runtime: -->
-  <run_depend>roscpp</run_depend>
-  <run_depend>tf2_ros</run_depend>
-  <run_depend>rviz</run_depend>
+  <depend>roscpp</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>rviz</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
