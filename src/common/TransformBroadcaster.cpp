@@ -30,9 +30,26 @@
  */
 
 #include "TransformBroadcaster.h"
+#include <mutex>
+
+/** As there can only be a single ROS StaticTransformBroadcaster per ROS node
+ *  (ROS only latches the last message on a given topic from a node),
+ *  we need to cache the instances */
+std::shared_ptr<tf2_ros::StaticTransformBroadcaster> getBroadCasterInstance() {
+  static std::mutex m;
+  static std::weak_ptr<tf2_ros::StaticTransformBroadcaster> singleton_;
+
+  std::lock_guard<std::mutex> lock(m);
+  if (singleton_.expired()) {
+    auto result = std::make_shared<tf2_ros::StaticTransformBroadcaster>();
+    singleton_ = result;
+    return result;
+  }
+  return singleton_.lock();
+}
 
 TransformBroadcaster::TransformBroadcaster(const QString &parent_frame, const QString &child_frame, QObject *parent) :
-  QObject(parent), valid_(false), enabled_(false)
+  QObject(parent), broadcaster_(getBroadCasterInstance()), valid_(false), enabled_(false)
 {
   setPosition(0,0,0);
   setQuaternion(0,0,0,1);
@@ -130,7 +147,7 @@ void TransformBroadcaster::send()
   if (enabled_ && valid_) {
     msg_.header.stamp = ros::Time::now();
     ++msg_.header.seq;
-    broadcaster_.sendTransform(msg_);
+    broadcaster_->sendTransform(msg_);
     ros::spinOnce();
   }
 }

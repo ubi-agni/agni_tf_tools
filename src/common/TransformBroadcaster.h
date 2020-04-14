@@ -71,7 +71,7 @@ protected:
   void check();
 
 private:
-  tf2_ros::StaticTransformBroadcaster broadcaster_;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster_;
   geometry_msgs::TransformStamped msg_;
   bool valid_;
   bool enabled_;
