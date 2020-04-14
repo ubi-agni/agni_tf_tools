@@ -36,6 +36,7 @@
 #include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <tf2/buffer_core.h>
 
 // forward declarations of classes
 namespace rviz
@@ -107,6 +108,8 @@ private:
 
   // tf publisher
   TransformBroadcaster *tf_pub_;
+  tf2::TransformableCallbackHandle tf_callback_handle_;
+  tf2::TransformableRequestHandle tf_request_handle_;
 
   // interactive marker stuff
   boost::shared_ptr<rviz::InteractiveMarker> imarker_;

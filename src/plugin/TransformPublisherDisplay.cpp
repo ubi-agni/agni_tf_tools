@@ -115,6 +115,7 @@ TransformPublisherDisplay::TransformPublisherDisplay()
 
 TransformPublisherDisplay::~TransformPublisherDisplay()
 {
+  context_->getTF2BufferPtr()->removeTransformableCallback(tf_callback_handle_);
 }
 
 void TransformPublisherDisplay::onInitialize()
@@ -122,6 +123,8 @@ void TransformPublisherDisplay::onInitialize()
   Display::onInitialize();
   parent_frame_property_->setFrameManager(context_->getFrameManager());
   child_frame_property_->setFrameManager(context_->getFrameManager());
+  tf_callback_handle_ = context_->getTF2BufferPtr()->addTransformableCallback(
+        boost::bind(&TransformPublisherDisplay::onFramesChanged, this));
 
   // show some children by default
   this->expand();
@@ -136,6 +139,7 @@ void TransformPublisherDisplay::reset()
 void TransformPublisherDisplay::onEnable()
 {
   Display::onEnable();
+  onFramesChanged();
   onBroadcastEnableChanged();
 }
 
@@ -286,10 +290,14 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
   std::string error;
   if (context_->getFrameManager()->transformHasProblems(parent_frame, ros::Time(), error))
   {
-    setStatusStd(StatusProperty::Error, MARKER_NAME, error);
+    // on failure, listen to TF changes
+    auto tf = context_->getTF2BufferPtr();
+    tf->cancelTransformableRequest(tf_request_handle_);
+    tf_request_handle_ = tf->addTransformableRequest(tf_callback_handle_, fixed_frame_.toStdString(), parent_frame, ros::Time());
+    setStatusStd(rviz::StatusProperty::Error, MARKER_NAME, error);
     return false;
   }
-  setStatusStd(StatusProperty::Ok, MARKER_NAME, "");
+  setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "");
 
   const Eigen::Quaterniond &q = rotation_property_->getQuaternion();
   const Ogre::Vector3 &p = translation_property_->getVector();
@@ -357,7 +365,8 @@ void TransformPublisherDisplay::onFramesChanged()
 {
   // update marker pose
   vm::InteractiveMarkerPose marker_pose;
-  fillPoseStamped(marker_pose.header, marker_pose.pose);
+  if (!fillPoseStamped(marker_pose.header, marker_pose.pose))
+    return;
   if (imarker_) imarker_->processMessage(marker_pose);
 
   // prepare transform for broadcasting
@@ -376,7 +385,8 @@ void TransformPublisherDisplay::onTransformChanged()
   if (ignore_updates_) return;
 
   vm::InteractiveMarkerPose marker_pose;
-  fillPoseStamped(marker_pose.header, marker_pose.pose);
+  if (!fillPoseStamped(marker_pose.header, marker_pose.pose))
+    return;
 
   // update marker pose + broadcast pose
   ignore_updates_ = true;
