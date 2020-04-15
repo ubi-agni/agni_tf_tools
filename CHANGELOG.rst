@@ -2,6 +2,18 @@
 Changelog for package agni_tf_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.1.5 (2020-04-15)
+------------------
+* Replace string-based SIGNALs with function pointers
+* Always show marker type property
+* EulerProperty: use QDoubleSpinBoxes (allowing animated motion)
+* Display: Fix several issues with frame updates
+  * Always consider return value of fillPoseStamped() and don't publish on failure
+  * On failure, register to TF changes to retry later
+  * Finish tf2 transition: use tf2::BufferCore instead of tf::Transformer
+* Handle multiple TransformBroadcasters in the same ROS node.
+* Contributors: Robert Haschke
+
 0.1.4 (2020-03-27)
 ------------------
 * migration to tf2
