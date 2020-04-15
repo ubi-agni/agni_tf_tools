@@ -46,7 +46,6 @@
 #include <rviz/default_plugin/interactive_markers/interactive_marker.h>
 #include <interactive_markers/tools.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <QDebug>
 
 namespace vm = visualization_msgs;
 const std::string MARKER_NAME = "marker";
@@ -110,7 +109,6 @@ TransformPublisherDisplay::TransformPublisherDisplay()
 
   marker_scale_property_ = new rviz::FloatProperty("marker scale", 0.2, "", marker_property_,
                                                    SLOT(onMarkerScaleChanged()), this);
-  marker_property_->hide(); // only show when marker is created
 }
 
 TransformPublisherDisplay::~TransformPublisherDisplay()
@@ -278,7 +276,6 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type)
   imarker_->setShowAxes(false);
   imarker_->setShowDescription(false);
 
-  marker_property_->show();
   return true;
 }
 
