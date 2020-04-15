@@ -39,10 +39,8 @@ FramesWidget::FramesWidget(const QString &parent_frame, const QString &child_fra
   setParentFrame(parent_frame);
   setChildFrame(child_frame);
 
-  connect(ui_->parent, SIGNAL(editingFinished()),
-          this, SLOT(parentEdited()));
-  connect(ui_->child, SIGNAL(editingFinished()),
-          this, SLOT(childEdited()));
+  connect(ui_->parent, &QLineEdit::editingFinished, this, &FramesWidget::parentEdited);
+  connect(ui_->child, &QLineEdit::editingFinished, this, &FramesWidget::childEdited);
 }
 
 QString FramesWidget::parentFrame() const

@@ -88,8 +88,8 @@ EulerProperty::EulerProperty(Property* parent, const QString& name,
   setEulerAxes("rpy");
 
   for (int i=0; i < 3; ++i) {
-    connect(euler_[i], SIGNAL(aboutToChange()), this, SLOT(emitAboutToChange()));
-    connect(euler_[i], SIGNAL(changed()), this, SLOT(updateFromChildren()));
+    connect(euler_[i], &SpinBoxFloatProperty::aboutToChange, this, &EulerProperty::emitAboutToChange);
+    connect(euler_[i], &SpinBoxFloatProperty::changed, this, &EulerProperty::updateFromChildren);
   }
 }
 

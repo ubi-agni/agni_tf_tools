@@ -35,7 +35,8 @@
 #include <Eigen/Geometry>
 #include <stdexcept>
 
-#include "rviz/properties/property.h"
+#include <rviz/properties/property.h>
+#include <rviz/properties/status_property.h>
 
 namespace rviz
 {
@@ -87,7 +88,7 @@ Q_SIGNALS:
   /** signal emitted when quaternion value has changed */
   void quaternionChanged(Eigen::Quaterniond q);
   /** signal emitted when there was an error, e.g. with Euler axes */
-  void statusUpdate(int, const QString&, const QString&);
+  void statusUpdate(rviz::StatusProperty::Level, const QString&, const QString&);
 
 private:
   void updateAngles(const Eigen::Quaterniond &q);

@@ -50,14 +50,12 @@ RotationProperty::RotationProperty(Property* parent, const QString& name,
   quaternion_property_ = new rviz::QuaternionProperty("quaternion",
                                                       Ogre::Quaternion(value.w(), value.x(), value.y(), value.z()),
                                                       "order: x, y, z, w", this);
-  connect(euler_property_, SIGNAL(changed()), this, SLOT(updateFromEuler()));
-  connect(quaternion_property_, SIGNAL(changed()), this, SLOT(updateFromQuaternion()));
+  connect(euler_property_, &EulerProperty::changed, this, &RotationProperty::updateFromEuler);
+  connect(quaternion_property_, &QuaternionProperty::changed, this, &RotationProperty::updateFromQuaternion);
   // forward status signal from EulerProperty
-  connect(euler_property_, SIGNAL(statusUpdate(int,QString,QString)),
-          this, SIGNAL(statusUpdate(int,QString,QString)));
+  connect(euler_property_, &EulerProperty::statusUpdate, this, &RotationProperty::statusUpdate);
   // forward quaternion updates
-  connect(euler_property_, SIGNAL(quaternionChanged(Eigen::Quaterniond)),
-          this, SIGNAL(quaternionChanged(Eigen::Quaterniond)));
+  connect(euler_property_, &EulerProperty::quaternionChanged, this, &RotationProperty::quaternionChanged);
   updateString();
 }
 

@@ -45,11 +45,12 @@ TransformWidget::TransformWidget(QWidget *parent) :
 
   ui_->setupUi(this);
 
-  connect(ui_->pos_x, SIGNAL(valueChanged(double)), this, SLOT(changePos(double)));
-  connect(ui_->pos_y, SIGNAL(valueChanged(double)), this, SLOT(changePos(double)));
-  connect(ui_->pos_z, SIGNAL(valueChanged(double)), this, SLOT(changePos(double)));
-  connect(ui_->euler_widget_, SIGNAL(valueChanged(Eigen::Quaterniond)),
-          this, SIGNAL(quaternionChanged(Eigen::Quaterniond)));
+  auto valueChanged = static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged);
+  auto changePos = static_cast<void(TransformWidget::*)(double)>(&TransformWidget::changePos);
+  connect(ui_->pos_x, valueChanged, this, changePos);
+  connect(ui_->pos_y, valueChanged, this, changePos);
+  connect(ui_->pos_z, valueChanged, this, changePos);
+  connect(ui_->euler_widget_, &EulerWidget::valueChanged, this, &TransformWidget::quaternionChanged);
 }
 
 const Eigen::Vector3d &TransformWidget::position() const

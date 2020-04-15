@@ -55,15 +55,13 @@ int main(int argc, char *argv[])
 
   TransformBroadcaster *tf_pub = new TransformBroadcaster(frames->parentFrame(),
                                                           frames->childFrame(), main);
-  QObject::connect(frames, SIGNAL(parentFrameChanged(QString)),
-                   tf_pub, SLOT(setParentFrame(QString)));
-  QObject::connect(frames, SIGNAL(childFrameChanged(QString)),
-                   tf_pub, SLOT(setChildFrame(QString)));
+  QObject::connect(frames, &FramesWidget::parentFrameChanged, tf_pub, &TransformBroadcaster::setParentFrame);
+  QObject::connect(frames, &FramesWidget::childFrameChanged, tf_pub, &TransformBroadcaster::setChildFrame);
 
-  QObject::connect(tf_widget, SIGNAL(positionChanged(Eigen::Vector3d)),
-                   tf_pub, SLOT(setPosition(Eigen::Vector3d)));
-  QObject::connect(tf_widget, SIGNAL(quaternionChanged(Eigen::Quaterniond)),
-                   tf_pub, SLOT(setQuaternion(Eigen::Quaterniond)));
+  QObject::connect(tf_widget, &TransformWidget::positionChanged,
+                   tf_pub, static_cast<void(TransformBroadcaster::*)(const Eigen::Vector3d&)>(&TransformBroadcaster::setPosition));
+  QObject::connect(tf_widget, &TransformWidget::quaternionChanged,
+                   tf_pub, static_cast<void(TransformBroadcaster::*)(const Eigen::Quaterniond&)>(&TransformBroadcaster::setQuaternion));
 
   main->setWindowTitle("static transform publisher");
   main->show();

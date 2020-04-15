@@ -93,10 +93,9 @@ TransformPublisherDisplay::TransformPublisherDisplay()
         "child frame", "", "", broadcast_property_,
         0, false, SLOT(onFramesChanged()), this);
 
-  connect(translation_property_, SIGNAL(changed()), this, SLOT(onTransformChanged()));
-  connect(rotation_property_, SIGNAL(quaternionChanged(Eigen::Quaterniond)), this, SLOT(onTransformChanged()));
-  connect(rotation_property_, SIGNAL(statusUpdate(int,QString,QString)),
-          this, SLOT(setStatus(int,QString,QString)));
+  connect(translation_property_, &rviz::Property::changed, this, &TransformPublisherDisplay::onTransformChanged);
+  connect(rotation_property_, &RotationProperty::quaternionChanged, this, &TransformPublisherDisplay::onTransformChanged);
+  connect(rotation_property_, &RotationProperty::statusUpdate, this, &TransformPublisherDisplay::setStatus);
   tf_pub_ = new TransformBroadcaster("", "", this);
   tf_pub_->setEnabled(false); // only enable with display
 
@@ -156,7 +155,7 @@ void TransformPublisherDisplay::update(float wall_dt, float ros_dt)
   // create marker if not yet done
   if (!imarker_ && marker_property_->getOptionInt() != NONE &&
       !createInteractiveMarker(marker_property_->getOptionInt()))
-    setStatusStd(StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
+    setStatusStd(rviz::StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
   else if (imarker_)
     imarker_->update(wall_dt); // get online marker updates
 }
@@ -261,10 +260,10 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type)
   }
 
   imarker_.reset(new rviz::InteractiveMarker(getSceneNode(), context_));
-  connect(imarker_.get(), SIGNAL(userFeedback(visualization_msgs::InteractiveMarkerFeedback&)),
-          this, SLOT(onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback&)));
-  connect(imarker_.get(), SIGNAL(statusUpdate(StatusProperty::Level,std::string,std::string)),
-          this, SLOT(setStatusStd(StatusProperty::Level,std::string,std::string)));
+  connect(imarker_.get(), &rviz::InteractiveMarker::userFeedback,
+          this, &TransformPublisherDisplay::onMarkerFeedback);
+  connect(imarker_.get(), &rviz::InteractiveMarker::statusUpdate,
+          this, &TransformPublisherDisplay::setStatusStd);
 
   setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
 
@@ -305,13 +304,13 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header &header,
   return true;
 }
 
-void TransformPublisherDisplay::setStatus(int level, const QString &name, const QString &text)
+void TransformPublisherDisplay::setStatus(rviz::StatusProperty::Level level, const QString &name, const QString &text)
 {
   if (level == rviz::StatusProperty::Ok && text.isEmpty()) {
-    Display::setStatus(static_cast<rviz::StatusProperty::Level>(level), name, text);
+    Display::setStatus(level, name, text);
     Display::deleteStatus(name);
   } else
-    Display::setStatus(static_cast<rviz::StatusProperty::Level>(level), name, text);
+    Display::setStatus(level, name, text);
 }
 
 void TransformPublisherDisplay::setStatusStd(rviz::StatusProperty::Level level,

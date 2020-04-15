@@ -64,20 +64,14 @@ EulerWidget::EulerWidget(QWidget *parent) :
   updateAngles();
 
   // react to axis changes
-  connect(ui_->a1, SIGNAL(currentIndexChanged(int)),
-          this, SLOT(axisChanged(int)));
-  connect(ui_->a2, SIGNAL(currentIndexChanged(int)),
-          this, SLOT(axisChanged(int)));
-  connect(ui_->a3, SIGNAL(currentIndexChanged(int)),
-          this, SLOT(axisChanged(int)));
+  connect(ui_->a1, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &EulerWidget::axisChanged);
+  connect(ui_->a2, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &EulerWidget::axisChanged);
+  connect(ui_->a3, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &EulerWidget::axisChanged);
 
   // react to angle changes
-  connect(ui_->e1, SIGNAL(valueChanged(double)),
-          this, SLOT(angleChanged(double)));
-  connect(ui_->e2, SIGNAL(valueChanged(double)),
-          this, SLOT(angleChanged(double)));
-  connect(ui_->e3, SIGNAL(valueChanged(double)),
-          this, SLOT(angleChanged(double)));
+  connect(ui_->e1, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &EulerWidget::angleChanged);
+  connect(ui_->e2, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &EulerWidget::angleChanged);
+  connect(ui_->e3, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &EulerWidget::angleChanged);
 }
 
 void EulerWidget::getGuiAxes(uint a[]) const {
