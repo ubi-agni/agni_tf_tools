@@ -40,7 +40,7 @@
 namespace rviz
 {
 
-class FloatProperty;
+class SpinBoxFloatProperty;
 
 class EulerProperty: public Property
 {
@@ -97,7 +97,7 @@ private:
   QString   axes_string_;
   uint      axes_[3]; // unit axis index for i-th rotation
   bool      fixed_;
-  FloatProperty* euler_[3];
+  SpinBoxFloatProperty* euler_[3];
   bool ignore_child_updates_;
   bool angles_read_only_;
   bool update_string_; // do we have any changes triggering an updateString()?

@@ -30,6 +30,7 @@
  */
 
 #include <QStringList>
+#include <QDoubleSpinBox>
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/status_property.h>
 #include <angles/angles.h>
@@ -39,6 +40,27 @@
 
 namespace rviz
 {
+
+class SpinBoxFloatProperty : public FloatProperty {
+public:
+  using FloatProperty::FloatProperty;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option) override;
+};
+
+QWidget *SpinBoxFloatProperty::createEditor(QWidget *parent, const QStyleOptionViewItem&)
+{
+  auto editor = new QDoubleSpinBox(parent);
+  editor->setFrame(false);
+  editor->setRange(getMin(), getMax());
+  editor->setSingleStep(1);
+  editor->setAccelerated(true);
+  editor->setDecimals(0);
+  connect(editor, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+          this, &SpinBoxFloatProperty::setFloat);
+  // do not react to text edits immediately, but only when editing is finished
+  editor->setKeyboardTracking(false);
+  return editor;
+}
 
 EulerProperty::invalid_axes::invalid_axes(const std::string &msg) :
   std::invalid_argument(msg)
@@ -60,9 +82,9 @@ EulerProperty::EulerProperty(Property* parent, const QString& name,
   , angles_read_only_(false)
   , update_string_(true)
 {
-  euler_[0] = new FloatProperty("", 0, "rotation angle about first axis", this);
-  euler_[1] = new FloatProperty("", 0, "rotation angle about second axis", this);
-  euler_[2] = new FloatProperty("", 0, "rotation angle about third axis", this);
+  euler_[0] = new SpinBoxFloatProperty("", 0, "rotation angle about first axis", this);
+  euler_[1] = new SpinBoxFloatProperty("", 0, "rotation angle about second axis", this);
+  euler_[2] = new SpinBoxFloatProperty("", 0, "rotation angle about third axis", this);
   setEulerAxes("rpy");
 
   for (int i=0; i < 3; ++i) {
