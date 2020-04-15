@@ -1,4 +1,5 @@
 # This config file for Travis CI utilizes https://github.com/ros-planning/moveit_ci/ package.
+os: linux
 services:
   - docker
 language: cpp
@@ -7,10 +8,10 @@ cache: ccache
 env:
   global:
     - CCACHE_DIR=$HOME/.ccache
-    - ROS_DISTRO=melodic
     - ROS_REPO=ros
-  matrix:
     - CATKIN_LINT=true
+  jobs:
+    - ROS_DISTRO=melodic
 
 before_script:
   - git clone --branch=master --quiet --depth 1 https://github.com/ros-industrial/industrial_ci.git .industrial_ci
