@@ -25,7 +25,7 @@ include_directories(${EIGEN3_INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS} ${catkin_INCLUD
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES agni_tf_tools
-#  CATKIN_DEPENDS tf2_geometry_msgs
+CATKIN_DEPENDS roscpp rviz
 #  DEPENDS system_lib
 )
 

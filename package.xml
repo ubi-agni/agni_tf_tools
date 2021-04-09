@@ -7,7 +7,7 @@
   The rviz plugin also allows to configure the transform with an interactive marker.
   </description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <maintainer email="rhaschke@techfak.uni-bielefeld.de">Robert Haschke</maintainer>
 
   <!-- One license tag required, multiple allowed, one license per tag -->
