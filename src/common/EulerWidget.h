@@ -44,7 +44,7 @@ class EulerWidget : public QWidget
 public:
   enum Axis {X = 0, Y = 1, Z = 2};
 
-  explicit EulerWidget(QWidget *parent = 0);
+  explicit EulerWidget(QWidget *parent = nullptr);
 
   const Eigen::Quaterniond &value() const;
 

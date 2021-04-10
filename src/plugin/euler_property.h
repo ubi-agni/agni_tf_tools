@@ -52,22 +52,22 @@ public:
     invalid_axes(const std::string &msg);
   };
 
-  EulerProperty(Property* parent = 0,
+  EulerProperty(Property* parent = nullptr,
                 const QString& name = QString(),
                 const Eigen::Quaterniond& value = Eigen::Quaterniond::Identity(),
-                const char *changed_slot = 0,
-                QObject* receiver = 0);
+                const char *changed_slot = nullptr,
+                QObject* receiver = nullptr);
 
   Eigen::Quaterniond getQuaternion() const {return quaternion_;}
-  virtual bool setValue(const QVariant& value);
+  bool setValue(const QVariant& value) override;
 
   /** @brief Load the value of this property and/or its children from
    * the given Config node. */
-  virtual void load(const Config& config);
-  virtual void save(Config config) const;
+  void load(const Config& config) override;
+  void save(Config config) const override;
 
   /** @brief Overridden from Property to propagate read-only-ness to children. */
-  virtual void setReadOnly(bool read_only);
+  void setReadOnly(bool read_only) override;
   bool getAnglesReadOnly() {return angles_read_only_;}
 
 public Q_SLOTS:

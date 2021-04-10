@@ -106,7 +106,7 @@ void EulerWidget::axisChanged(int axis) {
   }
 }
 
-void EulerWidget::angleChanged(double angle) {
+void EulerWidget::angleChanged(double /*angle*/) {
   double e[3]; getGuiAngles(e);
   setEulerAngles(e[0], e[1], e[2], false);
 }

@@ -39,7 +39,7 @@ static void usage (const char* prog_name, const po::options_description &opts, b
     std::cout << "from parent_frame_id to child_frame_id." << std::endl;
   }
   std::cout << std::endl;
-  std::cout << "Usage: static_transform_publisher [options] x y z  <rotation> parent_frame_id child_frame_id" << std::endl;
+  std::cout << "Usage: " << prog_name << " [options] x y z  <rotation> parent_frame_id child_frame_id" << std::endl;
   std::cout << opts << std::endl;
 }
 
@@ -74,7 +74,7 @@ static void parse_arguments(int argc, char **argv,
     const size_t numArgs = 3 + 2;
 
     bool bQuatMode = (mode == "wxyz" || mode == "xyzw");
-    if (mode == "")
+    if (mode.empty())
     {
       if (args.size() == numArgs+4) {
         bQuatMode = true; // 4 rotational args trigger quaternion mode too

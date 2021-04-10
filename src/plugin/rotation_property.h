@@ -47,21 +47,21 @@ class RotationProperty: public rviz::StringProperty
 {
 Q_OBJECT
 public:
-  RotationProperty(Property* parent = 0,
+  RotationProperty(Property* parent = nullptr,
                    const QString& name = QString(),
                    const Eigen::Quaterniond& value = Eigen::Quaterniond::Identity(),
-                   const char *changed_slot = 0,
-                   QObject* receiver = 0);
+                   const char *changed_slot = nullptr,
+                   QObject* receiver = nullptr);
 
   Eigen::Quaterniond getQuaternion() const;
-  virtual bool setValue(const QVariant& value);
+  bool setValue(const QVariant& value) override;
 
   /** @brief Load the value of this property and/or its children from the given Config node. */
-  virtual void load(const rviz::Config& config);
-  virtual void save(rviz::Config config) const;
+  void load(const rviz::Config& config) override;
+  void save(rviz::Config config) const override;
 
   /** @brief Overridden from Property to propagate read-only-ness to children. */
-  virtual void setReadOnly(bool read_only);
+  void setReadOnly(bool read_only) override;
 
 public Q_SLOTS:
   void setQuaternion(const Eigen::Quaterniond &q);
