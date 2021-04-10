@@ -26,6 +26,7 @@ jobs:
       CATKIN_LINT: true
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       BASEDIR: /home/runner/work
+      DOCKER_COMMIT: rhaschke/ici:agni_tf_tools-${{ matrix.distro }}-${{ matrix.repo || 'ros' }}
       CACHE_PREFIX: ${{ matrix.distro }}
       CLANG_TIDY_BASE_REF: ${{ github.base_ref || '' }}
 
@@ -50,9 +51,26 @@ jobs:
           restore-keys: |
             ccache-${{ env.CACHE_PREFIX }}-${{ github.sha }}
             ccache-${{ env.CACHE_PREFIX }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME || github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Fetch cached docker image
+        if: ${{ env.DOCKER_COMMIT && ! env.DOCKER_IMAGE }}
+        run: |
+          if docker pull ${{ env.DOCKER_COMMIT }} ; then
+            echo "DOCKER_IMAGE=$DOCKER_COMMIT" >> $GITHUB_ENV
+          fi
+
       - name: industrial_ci
         uses: rhaschke/industrial_ci@master
         env: ${{ matrix.env || env }}
+
+      - name: Upload docker image as cache
+        if: ${{ env.DOCKER_COMMIT }}
+        run: |
+          docker push ${{ env.DOCKER_COMMIT }} || true
       - name: Upload test artifacts (on failure)
         uses: actions/upload-artifact@v2
         if: failure()
