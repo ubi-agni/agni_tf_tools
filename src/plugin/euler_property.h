@@ -38,27 +38,29 @@
 #include <rviz/properties/property.h>
 #include <rviz/properties/status_property.h>
 
-namespace rviz
-{
+namespace rviz {
 
 class SpinBoxFloatProperty;
 
-class EulerProperty: public Property
+class EulerProperty : public Property
 {
   Q_OBJECT
 public:
-  class invalid_axes : public std::invalid_argument {
+  class invalid_axes : public std::invalid_argument
+  {
   public:
-    invalid_axes(const std::string &msg);
+    invalid_axes(const std::string& msg);
   };
 
   EulerProperty(Property* parent = nullptr,
                 const QString& name = QString(),
                 const Eigen::Quaterniond& value = Eigen::Quaterniond::Identity(),
-                const char *changed_slot = nullptr,
+                const char* changed_slot = nullptr,
                 QObject* receiver = nullptr);
 
-  Eigen::Quaterniond getQuaternion() const {return quaternion_;}
+  Eigen::Quaterniond getQuaternion() const {
+    return quaternion_;
+  }
   bool setValue(const QVariant& value) override;
 
   /** @brief Load the value of this property and/or its children from
@@ -68,17 +70,19 @@ public:
 
   /** @brief Overridden from Property to propagate read-only-ness to children. */
   void setReadOnly(bool read_only) override;
-  bool getAnglesReadOnly() {return angles_read_only_;}
+  bool getAnglesReadOnly() {
+    return angles_read_only_;
+  }
 
 public Q_SLOTS:
-  void setQuaternion(const Eigen::Quaterniond &q);
+  void setQuaternion(const Eigen::Quaterniond& q);
   void setEulerAngles(double euler[3], bool normalize);
   void setEulerAngles(double e1, double e2, double e3, bool normalize);
   /** select Euler axes from string, allowed values are "rpy", "ypr", x,y,z
    *  r or s in front of x,y,z chooses application order,
    *  i.e. with respect to rotated or fixed frame
    */
-  void setEulerAxes(const QString &axes_spec);
+  void setEulerAxes(const QString& axes_spec);
 
 private Q_SLOTS:
   void updateFromChildren();
@@ -91,13 +95,13 @@ Q_SIGNALS:
   void statusUpdate(rviz::StatusProperty::Level, const QString&, const QString&);
 
 private:
-  void updateAngles(const Eigen::Quaterniond &q);
+  void updateAngles(const Eigen::Quaterniond& q);
   void updateString();
 
   Eigen::Quaterniond quaternion_;
-  QString   axes_string_;
-  uint      axes_[3]; // unit axis index for i-th rotation
-  bool      fixed_;
+  QString axes_string_;
+  uint axes_[3]; // unit axis index for i-th rotation
+  bool fixed_;
   SpinBoxFloatProperty* euler_[3];
   bool ignore_child_updates_;
   bool angles_read_only_;

@@ -42,9 +42,9 @@ class FramesWidget : public QWidget
   Q_OBJECT
 
 public:
-  explicit FramesWidget(const QString &parent_frame="",
-                        const QString &child_frame="",
-                        QWidget *parent = nullptr);
+  explicit FramesWidget(const QString& parent_frame = "",
+                        const QString& child_frame = "",
+                        QWidget* parent = nullptr);
 
   QString parentFrame() const;
   QString childFrame() const;
@@ -58,9 +58,9 @@ private slots:
   void childEdited();
 
 signals:
-  void parentFrameChanged(const QString &frame);
-  void childFrameChanged(const QString &frame);
+  void parentFrameChanged(const QString& frame);
+  void childFrameChanged(const QString& frame);
 
 private:
-  Ui::FramesWidget *ui_;
+  Ui::FramesWidget* ui_;
 };

@@ -43,25 +43,25 @@ class TransformBroadcaster : public QObject
 {
   Q_OBJECT
 public:
-  explicit TransformBroadcaster(const QString &parent_frame="",
-                                const QString &child_frame="",
-                                QObject *parent = nullptr);
+  explicit TransformBroadcaster(const QString& parent_frame = "",
+                                const QString& child_frame = "",
+                                QObject* parent = nullptr);
 
   const geometry_msgs::TransformStamped& value() const;
-  void setValue(const geometry_msgs::TransformStamped &tf);
-  void setPose(const geometry_msgs::Pose &pose);
+  void setValue(const geometry_msgs::TransformStamped& tf);
+  void setPose(const geometry_msgs::Pose& pose);
 
   bool enabled() const;
 
 public slots:
-  void setEnabled(bool bEnabled=true);
-  void setDisabled(bool bDisabled=true);
+  void setEnabled(bool bEnabled = true);
+  void setDisabled(bool bDisabled = true);
 
-  void setParentFrame(const QString &frame);
-  void setChildFrame(const QString &frame);
+  void setParentFrame(const QString& frame);
+  void setChildFrame(const QString& frame);
 
-  void setPosition(const Eigen::Vector3d &p);
-  void setQuaternion(const Eigen::Quaterniond &q);
+  void setPosition(const Eigen::Vector3d& p);
+  void setQuaternion(const Eigen::Quaterniond& q);
 
   void setPosition(double x, double y, double z);
   void setQuaternion(double x, double y, double z, double w);

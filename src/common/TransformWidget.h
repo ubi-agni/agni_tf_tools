@@ -43,18 +43,18 @@ class TransformWidget : public QWidget
 {
   Q_OBJECT
 public:
-  explicit TransformWidget(QWidget *parent = nullptr);
+  explicit TransformWidget(QWidget* parent = nullptr);
 
   const Eigen::Vector3d& position() const;
   const Eigen::Quaterniond& quaternion() const;
 
 signals:
-  void positionChanged(const Eigen::Vector3d &p);
-  void quaternionChanged(const Eigen::Quaterniond &q);
+  void positionChanged(const Eigen::Vector3d& p);
+  void quaternionChanged(const Eigen::Quaterniond& q);
 
 public slots:
-  void setPosition(const Eigen::Vector3d &p);
-  void setQuaternion(const Eigen::Quaterniond &q);
+  void setPosition(const Eigen::Vector3d& p);
+  void setQuaternion(const Eigen::Quaterniond& q);
 
 private:
   // update position vector component i
@@ -66,5 +66,5 @@ private slots:
 
 private:
   Eigen::Vector3d pos_;
-  Ui::TransformWidget *ui_;
+  Ui::TransformWidget* ui_;
 };
