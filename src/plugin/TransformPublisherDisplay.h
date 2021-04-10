@@ -39,8 +39,7 @@
 #include <tf2/buffer_core.h>
 
 // forward declarations of classes
-namespace rviz
-{
+namespace rviz {
 class Property;
 class StringProperty;
 class BoolProperty;
@@ -50,12 +49,11 @@ class TfFrameProperty;
 class EnumProperty;
 
 class InteractiveMarker;
-}  // namespace rviz
+} // namespace rviz
 
 class TransformBroadcaster;
 
-namespace agni_tf_tools
-{
+namespace agni_tf_tools {
 
 class RotationProperty;
 
@@ -75,43 +73,44 @@ protected:
   void onDisable() override;
   void update(float wall_dt, float ros_dt) override;
 
-  void addFrameControls(visualization_msgs::InteractiveMarker &im, double scale, bool interactive);
-  void add6DOFControls(visualization_msgs::InteractiveMarker &im);
+  void addFrameControls(visualization_msgs::InteractiveMarker& im, double scale, bool interactive);
+  void add6DOFControls(visualization_msgs::InteractiveMarker& im);
   bool createInteractiveMarker(int type);
-  bool fillPoseStamped(std_msgs::Header &header, geometry_msgs::Pose &pose);
+  bool fillPoseStamped(std_msgs::Header& header, geometry_msgs::Pose& pose);
 
 protected Q_SLOTS:
-  void setStatus(rviz::StatusProperty::Level level, const QString &name, const QString &text) override;
-  void setStatusStd(rviz::StatusProperty::Level /*level*/, const std::string &name, const std::string &text);
+  void setStatus(rviz::StatusProperty::Level level, const QString& name, const QString& text) override;
+  void
+  setStatusStd(rviz::StatusProperty::Level /*level*/, const std::string& name, const std::string& text);
   void onRefFrameChanged();
   void onAdaptTransformChanged();
   void onFramesChanged();
   void onTransformChanged();
-  void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback &feedback);
+  void onMarkerFeedback(visualization_msgs::InteractiveMarkerFeedback& feedback);
   void onBroadcastEnableChanged();
   void onMarkerTypeChanged();
   void onMarkerScaleChanged();
 
 private:
   // properties
-  rviz::VectorProperty *translation_property_;
-  RotationProperty *rotation_property_;
-  rviz::BoolProperty *broadcast_property_;
-  rviz::TfFrameProperty *parent_frame_property_;
-  rviz::BoolProperty *adapt_transform_property_;
+  rviz::VectorProperty* translation_property_;
+  RotationProperty* rotation_property_;
+  rviz::BoolProperty* broadcast_property_;
+  rviz::TfFrameProperty* parent_frame_property_;
+  rviz::BoolProperty* adapt_transform_property_;
   std::string prev_parent_frame_;
-  rviz::TfFrameProperty *child_frame_property_;
-  rviz::EnumProperty *marker_property_;
-  rviz::FloatProperty *marker_scale_property_;
+  rviz::TfFrameProperty* child_frame_property_;
+  rviz::EnumProperty* marker_property_;
+  rviz::FloatProperty* marker_scale_property_;
 
   // tf publisher
-  TransformBroadcaster *tf_pub_;
+  TransformBroadcaster* tf_pub_;
   tf2::TransformableCallbackHandle tf_callback_handle_;
   tf2::TransformableRequestHandle tf_request_handle_;
 
   // interactive marker stuff
   boost::shared_ptr<rviz::InteractiveMarker> imarker_;
-  bool ignore_updates_ ;
+  bool ignore_updates_;
 };
 
-}  // namespace agni_tf_tools
+} // namespace agni_tf_tools

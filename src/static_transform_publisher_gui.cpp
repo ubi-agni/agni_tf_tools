@@ -37,31 +37,33 @@
 #include "TransformWidget.h"
 #include "TransformBroadcaster.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
   ros::init(argc, argv, "static_transform_publisher_gui",
-            ros::init_options::AnonymousName |
-            ros::init_options::NoSigintHandler);
+            ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
   QApplication app(argc, argv);
 
-  QWidget *main = new QWidget();
-  QVBoxLayout *l = new QVBoxLayout();
+  QWidget* main = new QWidget();
+  QVBoxLayout* l = new QVBoxLayout();
 
-  FramesWidget *frames = new FramesWidget();
-  TransformWidget *tf_widget = new TransformWidget();
+  FramesWidget* frames = new FramesWidget();
+  TransformWidget* tf_widget = new TransformWidget();
   l->addWidget(frames);
   l->addWidget(tf_widget);
   main->setLayout(l);
 
-  TransformBroadcaster *tf_pub = new TransformBroadcaster(frames->parentFrame(),
-                                                          frames->childFrame(), main);
-  QObject::connect(frames, &FramesWidget::parentFrameChanged, tf_pub, &TransformBroadcaster::setParentFrame);
-  QObject::connect(frames, &FramesWidget::childFrameChanged, tf_pub, &TransformBroadcaster::setChildFrame);
+  TransformBroadcaster* tf_pub =
+      new TransformBroadcaster(frames->parentFrame(), frames->childFrame(), main);
+  QObject::connect(frames, &FramesWidget::parentFrameChanged, tf_pub,
+                   &TransformBroadcaster::setParentFrame);
+  QObject::connect(frames, &FramesWidget::childFrameChanged, tf_pub,
+                   &TransformBroadcaster::setChildFrame);
 
-  QObject::connect(tf_widget, &TransformWidget::positionChanged,
-                   tf_pub, static_cast<void(TransformBroadcaster::*)(const Eigen::Vector3d&)>(&TransformBroadcaster::setPosition));
-  QObject::connect(tf_widget, &TransformWidget::quaternionChanged,
-                   tf_pub, static_cast<void(TransformBroadcaster::*)(const Eigen::Quaterniond&)>(&TransformBroadcaster::setQuaternion));
+  QObject::connect(tf_widget, &TransformWidget::positionChanged, tf_pub,
+                   static_cast<void (TransformBroadcaster::*)(const Eigen::Vector3d&)>(
+                       &TransformBroadcaster::setPosition));
+  QObject::connect(tf_widget, &TransformWidget::quaternionChanged, tf_pub,
+                   static_cast<void (TransformBroadcaster::*)(const Eigen::Quaterniond&)>(
+                       &TransformBroadcaster::setQuaternion));
 
   main->setWindowTitle("static transform publisher");
   main->show();

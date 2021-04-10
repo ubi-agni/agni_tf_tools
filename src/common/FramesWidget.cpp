@@ -32,9 +32,8 @@
 #include "FramesWidget.h"
 #include "ui_frames.h"
 
-FramesWidget::FramesWidget(const QString &parent_frame, const QString &child_frame, QWidget *parent) :
-   QWidget(parent), ui_(new Ui::FramesWidget)
-{
+FramesWidget::FramesWidget(const QString& parent_frame, const QString& child_frame, QWidget* parent)
+  : QWidget(parent), ui_(new Ui::FramesWidget) {
   ui_->setupUi(this);
   setParentFrame(parent_frame);
   setChildFrame(child_frame);
@@ -43,36 +42,32 @@ FramesWidget::FramesWidget(const QString &parent_frame, const QString &child_fra
   connect(ui_->child, &QLineEdit::editingFinished, this, &FramesWidget::childEdited);
 }
 
-QString FramesWidget::parentFrame() const
-{
+QString FramesWidget::parentFrame() const {
   return ui_->parent->text();
 }
 
-QString FramesWidget::childFrame() const
-{
+QString FramesWidget::childFrame() const {
   return ui_->child->text();
 }
 
-void FramesWidget::setParentFrame(const QString &frame)
-{
-  if (ui_->parent->text() == frame) return;
+void FramesWidget::setParentFrame(const QString& frame) {
+  if (ui_->parent->text() == frame)
+    return;
   ui_->parent->setText(frame);
   emit parentFrameChanged(frame);
 }
 
-void FramesWidget::setChildFrame(const QString &frame)
-{
-  if (ui_->child->text() == frame) return;
+void FramesWidget::setChildFrame(const QString& frame) {
+  if (ui_->child->text() == frame)
+    return;
   ui_->child->setText(frame);
   emit childFrameChanged(frame);
 }
 
-void FramesWidget::parentEdited()
-{
+void FramesWidget::parentEdited() {
   emit parentFrameChanged(ui_->parent->text());
 }
 
-void FramesWidget::childEdited()
-{
+void FramesWidget::childEdited() {
   emit childFrameChanged(ui_->child->text());
 }

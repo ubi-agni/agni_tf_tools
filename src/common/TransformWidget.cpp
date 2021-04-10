@@ -36,36 +36,32 @@
 
 #include <QMetaType>
 
-TransformWidget::TransformWidget(QWidget *parent) :
-  QWidget(parent), ui_(new Ui::TransformWidget)
-{
+TransformWidget::TransformWidget(QWidget* parent) : QWidget(parent), ui_(new Ui::TransformWidget) {
   qRegisterMetaType<Eigen::Quaterniond>("Eigen::Vector3d");
   qRegisterMetaType<Eigen::Quaterniond>("Eigen::Quaterniond");
   pos_.setZero();
 
   ui_->setupUi(this);
 
-  auto valueChanged = static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged);
-  auto changePos = static_cast<void(TransformWidget::*)(double)>(&TransformWidget::changePos);
+  auto valueChanged = static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged);
+  auto changePos = static_cast<void (TransformWidget::*)(double)>(&TransformWidget::changePos);
   connect(ui_->pos_x, valueChanged, this, changePos);
   connect(ui_->pos_y, valueChanged, this, changePos);
   connect(ui_->pos_z, valueChanged, this, changePos);
   connect(ui_->euler_widget_, &EulerWidget::valueChanged, this, &TransformWidget::quaternionChanged);
 }
 
-const Eigen::Vector3d &TransformWidget::position() const
-{
+const Eigen::Vector3d& TransformWidget::position() const {
   return pos_;
 }
 
-const Eigen::Quaterniond &TransformWidget::quaternion() const
-{
+const Eigen::Quaterniond& TransformWidget::quaternion() const {
   return ui_->euler_widget_->value();
 }
 
-void TransformWidget::setPosition(const Eigen::Vector3d &p)
-{
-  if (pos_.isApprox(p)) return;
+void TransformWidget::setPosition(const Eigen::Vector3d& p) {
+  if (pos_.isApprox(p))
+    return;
   pos_ = p;
 
   // do not trigger posChanged() signals
@@ -84,22 +80,23 @@ void TransformWidget::setPosition(const Eigen::Vector3d &p)
   emit positionChanged(pos_);
 }
 
-void TransformWidget::setQuaternion(const Eigen::Quaterniond &q)
-{
+void TransformWidget::setQuaternion(const Eigen::Quaterniond& q) {
   ui_->euler_widget_->setValue(q);
 }
 
-void TransformWidget::changePos(double value)
-{
-  QDoubleSpinBox *s = qobject_cast<QDoubleSpinBox*>(sender());
-  if (s == ui_->pos_x) changePos(0, value);
-  if (s == ui_->pos_y) changePos(1, value);
-  if (s == ui_->pos_z) changePos(2, value);
+void TransformWidget::changePos(double value) {
+  QDoubleSpinBox* s = qobject_cast<QDoubleSpinBox*>(sender());
+  if (s == ui_->pos_x)
+    changePos(0, value);
+  if (s == ui_->pos_y)
+    changePos(1, value);
+  if (s == ui_->pos_z)
+    changePos(2, value);
 }
 
-void TransformWidget::changePos(unsigned int i, double value)
-{
-  if (Eigen::internal::isApprox(pos_[i], value)) return;
+void TransformWidget::changePos(unsigned int i, double value) {
+  if (Eigen::internal::isApprox(pos_[i], value))
+    return;
   pos_[i] = value;
   emit positionChanged(pos_);
 }

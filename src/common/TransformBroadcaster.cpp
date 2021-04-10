@@ -48,93 +48,87 @@ std::shared_ptr<tf2_ros::StaticTransformBroadcaster> getBroadCasterInstance() {
   return singleton_.lock();
 }
 
-TransformBroadcaster::TransformBroadcaster(const QString &parent_frame, const QString &child_frame, QObject *parent) :
-  QObject(parent), broadcaster_(getBroadCasterInstance()), valid_(false), enabled_(false)
-{
-  setPosition(0,0,0);
-  setQuaternion(0,0,0,1);
+TransformBroadcaster::TransformBroadcaster(const QString& parent_frame,
+                                           const QString& child_frame,
+                                           QObject* parent)
+  : QObject(parent), broadcaster_(getBroadCasterInstance()), valid_(false), enabled_(false) {
+  setPosition(0, 0, 0);
+  setQuaternion(0, 0, 0, 1);
 
   setParentFrame(parent_frame);
   setChildFrame(child_frame);
 
   enabled_ = true;
-  check(); send();
+  check();
+  send();
 }
 
-const geometry_msgs::TransformStamped &TransformBroadcaster::value() const
-{
+const geometry_msgs::TransformStamped& TransformBroadcaster::value() const {
   return msg_;
 }
 
-void TransformBroadcaster::setValue(const geometry_msgs::TransformStamped &tf)
-{
+void TransformBroadcaster::setValue(const geometry_msgs::TransformStamped& tf) {
   msg_ = tf;
-  check(); send();
+  check();
+  send();
 }
 
-void TransformBroadcaster::setPose(const geometry_msgs::Pose &pose)
-{
+void TransformBroadcaster::setPose(const geometry_msgs::Pose& pose) {
   bool old = enabled_;
   enabled_ = false;
 
-  const geometry_msgs::Point &p = pose.position;
+  const geometry_msgs::Point& p = pose.position;
   setPosition(p.x, p.y, p.z);
 
-  const geometry_msgs::Quaternion &q = pose.orientation;
+  const geometry_msgs::Quaternion& q = pose.orientation;
   setQuaternion(q.x, q.y, q.z, q.w);
 
   enabled_ = old;
   send();
 }
 
-bool TransformBroadcaster::enabled() const
-{
+bool TransformBroadcaster::enabled() const {
   return enabled_;
 }
 
-void TransformBroadcaster::setEnabled(bool bEnabled)
-{
+void TransformBroadcaster::setEnabled(bool bEnabled) {
   enabled_ = bEnabled;
-  check(); send();
+  check();
+  send();
 }
 
-void TransformBroadcaster::setDisabled(bool bDisabled)
-{
+void TransformBroadcaster::setDisabled(bool bDisabled) {
   setEnabled(!bDisabled);
 }
 
-void TransformBroadcaster::setParentFrame(const QString &frame)
-{
+void TransformBroadcaster::setParentFrame(const QString& frame) {
   msg_.header.frame_id = frame.toStdString();
-  check(); send();
+  check();
+  send();
 }
 
-void TransformBroadcaster::setChildFrame(const QString &frame)
-{
+void TransformBroadcaster::setChildFrame(const QString& frame) {
   msg_.child_frame_id = frame.toStdString();
-  check(); send();
+  check();
+  send();
 }
 
-void TransformBroadcaster::setPosition(const Eigen::Vector3d &p)
-{
+void TransformBroadcaster::setPosition(const Eigen::Vector3d& p) {
   setPosition(p.x(), p.y(), p.z());
 }
 
-void TransformBroadcaster::setQuaternion(const Eigen::Quaterniond &q)
-{
+void TransformBroadcaster::setQuaternion(const Eigen::Quaterniond& q) {
   setQuaternion(q.x(), q.y(), q.z(), q.w());
 }
 
-void TransformBroadcaster::setPosition(double x, double y, double z)
-{
+void TransformBroadcaster::setPosition(double x, double y, double z) {
   msg_.transform.translation.x = x;
   msg_.transform.translation.y = y;
   msg_.transform.translation.z = z;
   send();
 }
 
-void TransformBroadcaster::setQuaternion(double x, double y, double z, double w)
-{
+void TransformBroadcaster::setQuaternion(double x, double y, double z, double w) {
   msg_.transform.rotation.x = x;
   msg_.transform.rotation.y = y;
   msg_.transform.rotation.z = z;
@@ -142,8 +136,7 @@ void TransformBroadcaster::setQuaternion(double x, double y, double z, double w)
   send();
 }
 
-void TransformBroadcaster::send()
-{
+void TransformBroadcaster::send() {
   if (enabled_ && valid_) {
     msg_.header.stamp = ros::Time::now();
     ++msg_.header.seq;
@@ -152,10 +145,7 @@ void TransformBroadcaster::send()
   }
 }
 
-void TransformBroadcaster::check()
-{
-  valid_ =
-      !msg_.header.frame_id.empty() &&
-      !msg_.child_frame_id.empty() &&
-      msg_.header.frame_id != msg_.child_frame_id;
+void TransformBroadcaster::check() {
+  valid_ = !msg_.header.frame_id.empty() && !msg_.child_frame_id.empty() &&
+           msg_.header.frame_id != msg_.child_frame_id;
 }

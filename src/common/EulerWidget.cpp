@@ -37,41 +37,48 @@
 #include <iostream>
 
 // ensure different axes for consecutive operations
-static void disableAxis(QComboBox *w, unsigned int axis) {
+static void disableAxis(QComboBox* w, unsigned int axis) {
   const QStandardItemModel* model = qobject_cast<const QStandardItemModel*>(w->model());
-  for (unsigned int i=0; i < 3; ++i) {
+  for (unsigned int i = 0; i < 3; ++i) {
     QStandardItem* item = model->item(i);
     if (i == axis) {
       item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
-      if (w->currentIndex() == static_cast<int>(axis)) w->setCurrentIndex((axis+1) % 3);
+      if (w->currentIndex() == static_cast<int>(axis))
+        w->setCurrentIndex((axis + 1) % 3);
     } else {
       item->setFlags(item->flags() | Qt::ItemIsEnabled);
     }
   }
 }
 
-EulerWidget::EulerWidget(QWidget *parent) :
-  QWidget(parent), ui_(new Ui::EulerWidget)
-{
+EulerWidget::EulerWidget(QWidget* parent) : QWidget(parent), ui_(new Ui::EulerWidget) {
   qRegisterMetaType<Eigen::Quaterniond>("Eigen::Quaterniond");
 
   ui_->setupUi(this);
   ui_->a1->setCurrentIndex(0);
-  ui_->a2->setCurrentIndex(1); disableAxis(ui_->a2, 0);
-  ui_->a3->setCurrentIndex(2); disableAxis(ui_->a3, 1);
+  ui_->a2->setCurrentIndex(1);
+  disableAxis(ui_->a2, 0);
+  ui_->a3->setCurrentIndex(2);
+  disableAxis(ui_->a3, 1);
 
   q_ = Eigen::Quaterniond::Identity();
   updateAngles();
 
   // react to axis changes
-  connect(ui_->a1, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &EulerWidget::axisChanged);
-  connect(ui_->a2, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &EulerWidget::axisChanged);
-  connect(ui_->a3, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &EulerWidget::axisChanged);
+  connect(ui_->a1, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this,
+          &EulerWidget::axisChanged);
+  connect(ui_->a2, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this,
+          &EulerWidget::axisChanged);
+  connect(ui_->a3, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this,
+          &EulerWidget::axisChanged);
 
   // react to angle changes
-  connect(ui_->e1, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &EulerWidget::angleChanged);
-  connect(ui_->e2, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &EulerWidget::angleChanged);
-  connect(ui_->e3, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &EulerWidget::angleChanged);
+  connect(ui_->e1, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+          &EulerWidget::angleChanged);
+  connect(ui_->e2, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+          &EulerWidget::angleChanged);
+  connect(ui_->e3, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+          &EulerWidget::angleChanged);
 }
 
 void EulerWidget::getGuiAxes(uint a[]) const {
@@ -93,30 +100,31 @@ void EulerWidget::axisChanged(int axis) {
 
   // ensure different axes for consecutive operations
   QComboBox* origin = dynamic_cast<QComboBox*>(sender());
-  if (origin == ui_->a1) disableAxis(ui_->a2, axis);
-  if (origin == ui_->a2) disableAxis(ui_->a3, axis);
+  if (origin == ui_->a1)
+    disableAxis(ui_->a2, axis);
+  if (origin == ui_->a2)
+    disableAxis(ui_->a3, axis);
 
   if (bFirstCall) {
     updateAngles();
     this->blockSignals(false);
 
-    emit axesChanged(ui_->a1->currentIndex(),
-                     ui_->a2->currentIndex(),
-                     ui_->a3->currentIndex());
+    emit axesChanged(ui_->a1->currentIndex(), ui_->a2->currentIndex(), ui_->a3->currentIndex());
   }
 }
 
 void EulerWidget::angleChanged(double /*angle*/) {
-  double e[3]; getGuiAngles(e);
+  double e[3];
+  getGuiAngles(e);
   setEulerAngles(e[0], e[1], e[2], false);
 }
 
 void EulerWidget::setEulerAngles(double e1, double e2, double e3, bool normalize) {
-  uint a[3]; getGuiAxes(a);
-  Eigen::Quaterniond q =
-      Eigen::AngleAxisd(e1, Eigen::Vector3d::Unit(a[0])) *
-      Eigen::AngleAxisd(e2, Eigen::Vector3d::Unit(a[1])) *
-      Eigen::AngleAxisd(e3, Eigen::Vector3d::Unit(a[2]));
+  uint a[3];
+  getGuiAxes(a);
+  Eigen::Quaterniond q = Eigen::AngleAxisd(e1, Eigen::Vector3d::Unit(a[0])) *
+                         Eigen::AngleAxisd(e2, Eigen::Vector3d::Unit(a[1])) *
+                         Eigen::AngleAxisd(e3, Eigen::Vector3d::Unit(a[2]));
   if (normalize)
     setValue(q);
   else {
@@ -133,18 +141,19 @@ void EulerWidget::setEulerAngles(double e1, double e2, double e3, bool normalize
     ui_->e2->blockSignals(false);
     ui_->e3->blockSignals(false);
 
-    if (q_.isApprox(q)) return;
+    if (q_.isApprox(q))
+      return;
     q_ = q;
     emit valueChanged(q);
   }
 }
 
-void EulerWidget::setEulerAxes(uint a1, uint a2, uint a3)
-{
-  if (a1 > 2 || a2 > 2 || a3 > 2) return;
+void EulerWidget::setEulerAxes(uint a1, uint a2, uint a3) {
+  if (a1 > 2 || a2 > 2 || a3 > 2)
+    return;
   if (static_cast<int>(a1) == ui_->a1->currentIndex() &&
-      static_cast<int>(a2) == ui_->a2->currentIndex() &&
-      static_cast<int>(a3) == ui_->a3->currentIndex()) return;
+      static_cast<int>(a2) == ui_->a2->currentIndex() && static_cast<int>(a3) == ui_->a3->currentIndex())
+    return;
 
   this->blockSignals(true);
   ui_->a3->setCurrentIndex(a3);
@@ -157,8 +166,9 @@ void EulerWidget::setEulerAxes(uint a1, uint a2, uint a3)
 }
 
 
-void EulerWidget::setValue(const Eigen::Quaterniond &q) {
-  if (q_.isApprox(q)) return;
+void EulerWidget::setValue(const Eigen::Quaterniond& q) {
+  if (q_.isApprox(q))
+    return;
   q_ = q;
   updateAngles();
   emit valueChanged(q);
@@ -171,7 +181,8 @@ const Eigen::Quaterniond& EulerWidget::value() const {
 
 void EulerWidget::updateAngles() {
   // ensure different axes for consecutive operations
-  uint a[3]; getGuiAxes(a);
+  uint a[3];
+  getGuiAxes(a);
   Eigen::Vector3d e = q_.matrix().eulerAngles(a[0], a[1], a[2]);
   setEulerAngles(e[0], e[1], e[2], false);
 }

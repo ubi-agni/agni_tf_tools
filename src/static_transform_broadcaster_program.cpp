@@ -31,36 +31,31 @@
 #include <Eigen/Geometry>
 
 #include <boost/program_options.hpp>
-namespace po=boost::program_options;
+namespace po = boost::program_options;
 
-static void usage (const char* prog_name, const po::options_description &opts, bool desc=false) {
+static void usage(const char* prog_name, const po::options_description& opts, bool desc = false) {
   if (desc) {
     std::cout << "A command line utility for manually defining a (static) transform" << std::endl;
     std::cout << "from parent_frame_id to child_frame_id." << std::endl;
   }
   std::cout << std::endl;
-  std::cout << "Usage: " << prog_name << " [options] x y z  <rotation> parent_frame_id child_frame_id" << std::endl;
+  std::cout << "Usage: " << prog_name << " [options] x y z  <rotation> parent_frame_id child_frame_id"
+            << std::endl;
   std::cout << opts << std::endl;
 }
 
-static void parse_arguments(int argc, char **argv,
-                            geometry_msgs::TransformStamped &msg) {
+static void parse_arguments(int argc, char** argv, geometry_msgs::TransformStamped& msg) {
   std::string mode;
   po::options_description options_description("allowed options");
-  options_description.add_options()
-      ("help,h", "show this help message")
-      ("mode,m", po::value<std::string>(&mode))
-      ;
+  options_description.add_options()("help,h", "show this help message")("mode,m",
+                                                                        po::value<std::string>(&mode));
 
   po::variables_map variables_map;
   std::vector<std::string> args;
   std::vector<std::string>::const_iterator arg;
   try {
     po::parsed_options parsed =
-        po::command_line_parser(argc, argv)
-        .options(options_description)
-        .allow_unregistered()
-        .run();
+        po::command_line_parser(argc, argv).options(options_description).allow_unregistered().run();
 
     po::store(parsed, variables_map);
     po::notify(variables_map);
@@ -69,17 +64,16 @@ static void parse_arguments(int argc, char **argv,
 
     if (variables_map.count("help")) {
       usage(argv[0], options_description, true);
-      exit (EXIT_SUCCESS);
+      exit(EXIT_SUCCESS);
     }
     const size_t numArgs = 3 + 2;
 
     bool bQuatMode = (mode == "wxyz" || mode == "xyzw");
-    if (mode.empty())
-    {
-      if (args.size() == numArgs+4) {
+    if (mode.empty()) {
+      if (args.size() == numArgs + 4) {
         bQuatMode = true; // 4 rotational args trigger quaternion mode too
         mode = "xyzw";
-      } else if (args.size() == numArgs+3) {
+      } else if (args.size() == numArgs + 3) {
         mode = "zyx";
       } else {
         throw po::error("invalid number of positional arguments");
@@ -87,30 +81,32 @@ static void parse_arguments(int argc, char **argv,
     }
 
     // consume position arguments
-    msg.transform.translation.x = boost::lexical_cast<double>(*arg); ++arg;
-    msg.transform.translation.y = boost::lexical_cast<double>(*arg); ++arg;
-    msg.transform.translation.z = boost::lexical_cast<double>(*arg); ++arg;
+    msg.transform.translation.x = boost::lexical_cast<double>(*arg);
+    ++arg;
+    msg.transform.translation.y = boost::lexical_cast<double>(*arg);
+    ++arg;
+    msg.transform.translation.z = boost::lexical_cast<double>(*arg);
+    ++arg;
 
     // consume orientation arguments
     Eigen::Quaterniond q;
     if (bQuatMode) { // parse Quaternion
-      if (args.size() != numArgs+4)
-        throw po::error("quaternion mode requires " +
-                        boost::lexical_cast<std::string>(numArgs+4) +
+      if (args.size() != numArgs + 4)
+        throw po::error("quaternion mode requires " + boost::lexical_cast<std::string>(numArgs + 4) +
                         " positional arguments");
 
       const std::string eigen_order("xyzw");
       double data[4];
-      for (size_t i=0; i<4; ++i) {
+      for (size_t i = 0; i < 4; ++i) {
         size_t idx = eigen_order.find(mode[i]);
-        data[idx] = boost::lexical_cast<double>(*arg); ++arg;
+        data[idx] = boost::lexical_cast<double>(*arg);
+        ++arg;
       }
       q = Eigen::Quaterniond(data);
 
     } else { // parse Euler angles
-      if (args.size() != numArgs+3)
-        throw po::error("Euler angles require " +
-                        boost::lexical_cast<std::string>(numArgs+3) +
+      if (args.size() != numArgs + 3)
+        throw po::error("Euler angles require " + boost::lexical_cast<std::string>(numArgs + 3) +
                         " positional arguments");
       if (mode.size() != 3)
         throw po::error("mode specification for Euler angles requires a string from 3 chars (xyz)");
@@ -119,13 +115,14 @@ static void parse_arguments(int argc, char **argv,
       size_t axes_idxs[3];
       double angles[3];
 
-      for (size_t i=0; i<3; ++i) {
+      for (size_t i = 0; i < 3; ++i) {
         size_t idx = axes_order.find(mode[i]);
         if (idx == std::string::npos)
           throw po::error("invalid axis specification for Euler angles: " +
                           boost::lexical_cast<std::string>(mode[i]));
         axes_idxs[i] = idx;
-        angles[i] = boost::lexical_cast<double>(*arg); ++arg;
+        angles[i] = boost::lexical_cast<double>(*arg);
+        ++arg;
       }
       q = Eigen::AngleAxisd(angles[0], Eigen::Vector3d::Unit(axes_idxs[0])) *
           Eigen::AngleAxisd(angles[1], Eigen::Vector3d::Unit(axes_idxs[1])) *
@@ -141,32 +138,29 @@ static void parse_arguments(int argc, char **argv,
     // consume link arguments
     msg.header.frame_id = *arg++;
     msg.child_frame_id = *arg++;
-  } catch (const po::error  &e) {
+  } catch (const po::error& e) {
     ROS_FATAL_STREAM(e.what());
     usage(argv[0], options_description);
-    exit (EXIT_FAILURE);
-  } catch (const boost::bad_lexical_cast &e) {
+    exit(EXIT_FAILURE);
+  } catch (const boost::bad_lexical_cast& e) {
     ROS_FATAL_STREAM("failed to parse numerical value: " << *arg);
     usage(argv[0], options_description);
-    exit (EXIT_FAILURE);
+    exit(EXIT_FAILURE);
   }
 }
 
-int main(int argc, char ** argv)
-{
+int main(int argc, char** argv) {
   // Initialize ROS
   ros::init(argc, argv, "static_transform_publisher", ros::init_options::AnonymousName);
 
   geometry_msgs::TransformStamped msg;
   parse_arguments(argc, argv, msg);
 
-  if (msg.header.frame_id.empty() || msg.child_frame_id.empty())
-  {
+  if (msg.header.frame_id.empty() || msg.child_frame_id.empty()) {
     ROS_FATAL("target or source frame is empty");
     exit(1);
   }
-  if (msg.header.frame_id == msg.child_frame_id)
-  {
+  if (msg.header.frame_id == msg.child_frame_id) {
     ROS_FATAL("target and source frame are the same (%s, %s) this cannot work",
               msg.child_frame_id.c_str(), msg.header.frame_id.c_str());
     exit(1);
@@ -175,8 +169,8 @@ int main(int argc, char ** argv)
   tf2_ros::StaticTransformBroadcaster broadcaster;
   broadcaster.sendTransform(msg);
 
-  ROS_INFO("Spinning until killed, publishing %s to %s",
-           msg.header.frame_id.c_str(), msg.child_frame_id.c_str());
+  ROS_INFO("Spinning until killed, publishing %s to %s", msg.header.frame_id.c_str(),
+           msg.child_frame_id.c_str());
   ros::spin();
 
   return 0;

@@ -33,25 +33,29 @@
 
 using namespace rviz;
 
-namespace agni_tf_tools
-{
+namespace agni_tf_tools {
 
-RotationProperty::RotationProperty(Property* parent, const QString& name,
+RotationProperty::RotationProperty(Property* parent,
+                                   const QString& name,
                                    const Eigen::Quaterniond& value,
-                                   const char *changed_slot,
+                                   const char* changed_slot,
                                    QObject* receiver)
-   : StringProperty(name, "",
-                    "Orientation specification using Euler angles or a quaternion.",
-                    parent, changed_slot, receiver)
-   , ignore_quaternion_property_updates_(false)
-   , show_euler_string_(true)
-{
+  : StringProperty(name,
+                   "",
+                   "Orientation specification using Euler angles or a quaternion.",
+                   parent,
+                   changed_slot,
+                   receiver)
+  , ignore_quaternion_property_updates_(false)
+  , show_euler_string_(true) {
   euler_property_ = new EulerProperty(this, "Euler angles", value);
-  quaternion_property_ = new rviz::QuaternionProperty("quaternion",
-                                                      Ogre::Quaternion(value.w(), value.x(), value.y(), value.z()),
-                                                      "order: x, y, z, w", this);
+  quaternion_property_ =
+      new rviz::QuaternionProperty("quaternion",
+                                   Ogre::Quaternion(value.w(), value.x(), value.y(), value.z()),
+                                   "order: x, y, z, w", this);
   connect(euler_property_, &EulerProperty::changed, this, &RotationProperty::updateFromEuler);
-  connect(quaternion_property_, &QuaternionProperty::changed, this, &RotationProperty::updateFromQuaternion);
+  connect(quaternion_property_, &QuaternionProperty::changed, this,
+          &RotationProperty::updateFromQuaternion);
   // forward status signal from EulerProperty
   connect(euler_property_, &EulerProperty::statusUpdate, this, &RotationProperty::statusUpdate);
   // forward quaternion updates
@@ -59,22 +63,20 @@ RotationProperty::RotationProperty(Property* parent, const QString& name,
   updateString();
 }
 
-Eigen::Quaterniond RotationProperty::getQuaternion() const
-{
+Eigen::Quaterniond RotationProperty::getQuaternion() const {
   return euler_property_->getQuaternion();
 }
 
-void RotationProperty::setQuaternion(const Eigen::Quaterniond& q)
-{
+void RotationProperty::setQuaternion(const Eigen::Quaterniond& q) {
   Eigen::Quaterniond qn = q.normalized();
-  if (getQuaternion().isApprox(qn)) return;
+  if (getQuaternion().isApprox(qn))
+    return;
   // EulerProperty is considered "master".
   // EulerProperty update will trigger QuaternionProperty update too
   euler_property_->setQuaternion(qn);
 }
 
-void RotationProperty::updateFromEuler()
-{
+void RotationProperty::updateFromEuler() {
   const Eigen::Quaterniond q = euler_property_->getQuaternion();
   // do not update QuaternionProperty
   if (!ignore_quaternion_property_updates_) {
@@ -84,16 +86,17 @@ void RotationProperty::updateFromEuler()
   updateString();
 }
 
-void RotationProperty::updateFromQuaternion()
-{
+void RotationProperty::updateFromQuaternion() {
   // protect from infinite update loop
-  if (ignore_quaternion_property_updates_) return;
+  if (ignore_quaternion_property_updates_)
+    return;
 
-  const Ogre::Quaternion &q = quaternion_property_->getQuaternion();
+  const Ogre::Quaternion& q = quaternion_property_->getQuaternion();
   Eigen::Quaternion<Ogre::Real> eigen_q(q.w, q.x, q.y, q.z);
 
   // only update if changes are within accuracy range
-  if (eigen_q.isApprox(getQuaternion().cast<Ogre::Real>())) return;
+  if (eigen_q.isApprox(getQuaternion().cast<Ogre::Real>()))
+    return;
 
   ignore_quaternion_property_updates_ = true;
   setQuaternion(eigen_q.cast<double>());
@@ -103,38 +106,32 @@ void RotationProperty::updateFromQuaternion()
   updateString();
 }
 
-void RotationProperty::setEulerAngles(double euler[], bool normalize)
-{
+void RotationProperty::setEulerAngles(double euler[], bool normalize) {
   euler_property_->setEulerAngles(euler, normalize);
 }
 
-void RotationProperty::setEulerAngles(double e1, double e2, double e3, bool normalize)
-{
+void RotationProperty::setEulerAngles(double e1, double e2, double e3, bool normalize) {
   euler_property_->setEulerAngles(e1, e2, e3, normalize);
 }
 
-void RotationProperty::setEulerAxes(const QString &axes_spec)
-{
+void RotationProperty::setEulerAxes(const QString& axes_spec) {
   euler_property_->setEulerAxes(axes_spec);
 }
 
-bool RotationProperty::setValue(const QVariant& value)
-{
+bool RotationProperty::setValue(const QVariant& value) {
   // forward parsing to either Quaternion- or EulerProperty
   const QRegExp quatSpec("\\s*(quat:)?([^;]+;){3}");
   QString s = value.toString();
-  if (quatSpec.indexIn(s) != -1)
-  {
+  if (quatSpec.indexIn(s) != -1) {
     s = s.mid(quatSpec.cap(1).length());
     return quaternion_property_->setValue(s);
   }
   return euler_property_->setValue(value);
 }
 
-void RotationProperty::updateString()
-{
+void RotationProperty::updateString() {
   QString euler = euler_property_->getValue().toString();
-  QString quat  = QString("quat: ") + quaternion_property_->getValue().toString();
+  QString quat = QString("quat: ") + quaternion_property_->getValue().toString();
   QString s = show_euler_string_ ? euler : quat;
   if (getString() != s) {
     Q_EMIT aboutToChange();
@@ -143,22 +140,19 @@ void RotationProperty::updateString()
   }
 }
 
-void RotationProperty::load(const Config& config)
-{
+void RotationProperty::load(const Config& config) {
   // save/load from EulerProperty. This handles both, quaternion and euler axes.
   euler_property_->load(config);
 }
 
-void RotationProperty::save(Config config) const
-{
+void RotationProperty::save(Config config) const {
   // save/load from EulerProperty. This handles both, quaternion and euler axes.
   euler_property_->save(config);
 }
 
-void RotationProperty::setReadOnly(bool read_only)
-{
+void RotationProperty::setReadOnly(bool read_only) {
   euler_property_->setReadOnly(read_only);
   quaternion_property_->setReadOnly(read_only);
 }
 
-}  // namespace agni_tf_tools
+} // namespace agni_tf_tools
