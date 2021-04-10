@@ -47,7 +47,7 @@ public:
   QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option) override;
 };
 
-QWidget *SpinBoxFloatProperty::createEditor(QWidget *parent, const QStyleOptionViewItem&)
+QWidget *SpinBoxFloatProperty::createEditor(QWidget *parent, const QStyleOptionViewItem& /*option*/)
 {
   auto editor = new QDoubleSpinBox(parent);
   editor->setFrame(false);
@@ -226,7 +226,7 @@ bool EulerProperty::setValue(const QVariant& value)
 
   // parse angles
   QStringList strings = s.split(';');
-  double euler[3];
+  double euler[3] = {0, 0, 0};
   bool ok = true;
   for (int i=0; i < 3 && ok; ++i)
   {

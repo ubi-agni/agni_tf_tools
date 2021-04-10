@@ -45,7 +45,7 @@ class TransformBroadcaster : public QObject
 public:
   explicit TransformBroadcaster(const QString &parent_frame="",
                                 const QString &child_frame="",
-                                QObject *parent = 0);
+                                QObject *parent = nullptr);
 
   const geometry_msgs::TransformStamped& value() const;
   void setValue(const geometry_msgs::TransformStamped &tf);

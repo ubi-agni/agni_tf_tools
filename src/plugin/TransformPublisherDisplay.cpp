@@ -79,7 +79,7 @@ TransformPublisherDisplay::TransformPublisherDisplay()
 
   parent_frame_property_ = new rviz::TfFrameProperty(
         "parent frame", rviz::TfFrameProperty::FIXED_FRAME_STRING, "", this,
-        0, true, SLOT(onRefFrameChanged()), this);
+        nullptr, true, SLOT(onRefFrameChanged()), this);
   adapt_transform_property_ = new rviz::BoolProperty(
         "adapt transformation", false,
         "Adapt transformation when changing the parent frame? "
@@ -91,7 +91,7 @@ TransformPublisherDisplay::TransformPublisherDisplay()
                                                SLOT(onBroadcastEnableChanged()), this);
   child_frame_property_ = new rviz::TfFrameProperty(
         "child frame", "", "", broadcast_property_,
-        0, false, SLOT(onFramesChanged()), this);
+        nullptr, false, SLOT(onFramesChanged()), this);
 
   connect(translation_property_, &rviz::Property::changed, this, &TransformPublisherDisplay::onTransformChanged);
   connect(rotation_property_, &RotationProperty::quaternionChanged, this, &TransformPublisherDisplay::onTransformChanged);

@@ -44,7 +44,7 @@ class FramesWidget : public QWidget
 public:
   explicit FramesWidget(const QString &parent_frame="",
                         const QString &child_frame="",
-                        QWidget *parent = 0);
+                        QWidget *parent = nullptr);
 
   QString parentFrame() const;
   QString childFrame() const;

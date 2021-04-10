@@ -161,4 +161,4 @@ void RotationProperty::setReadOnly(bool read_only)
   quaternion_property_->setReadOnly(read_only);
 }
 
-} // end namespace rviz
+}  // namespace agni_tf_tools

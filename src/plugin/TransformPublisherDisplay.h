@@ -50,7 +50,7 @@ class TfFrameProperty;
 class EnumProperty;
 
 class InteractiveMarker;
-}
+}  // namespace rviz
 
 class TransformBroadcaster;
 
@@ -65,7 +65,7 @@ class TransformPublisherDisplay : public rviz::Display
 
 public:
   TransformPublisherDisplay();
-  ~TransformPublisherDisplay();
+  ~TransformPublisherDisplay() override;
 
   void reset() override;
 
@@ -82,7 +82,7 @@ protected:
 
 protected Q_SLOTS:
   void setStatus(rviz::StatusProperty::Level level, const QString &name, const QString &text) override;
-  void setStatusStd(rviz::StatusProperty::Level, const std::string &name, const std::string &text);
+  void setStatusStd(rviz::StatusProperty::Level /*level*/, const std::string &name, const std::string &text);
   void onRefFrameChanged();
   void onAdaptTransformChanged();
   void onFramesChanged();
@@ -114,4 +114,4 @@ private:
   bool ignore_updates_ ;
 };
 
-} // namespace rviz_cbf_plugin
+}  // namespace agni_tf_tools
