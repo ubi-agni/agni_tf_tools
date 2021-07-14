@@ -77,6 +77,7 @@ protected:
   void add6DOFControls(visualization_msgs::InteractiveMarker& im);
   bool createInteractiveMarker(int type);
   bool fillPoseStamped(std_msgs::Header& header, geometry_msgs::Pose& pose);
+  void cancelTFRequest();
 
 protected Q_SLOTS:
   void setStatus(rviz::StatusProperty::Level level, const QString& name, const QString& text) override;

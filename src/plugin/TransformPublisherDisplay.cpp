@@ -68,7 +68,8 @@ void static updatePose(geometry_msgs::Pose& pose,
 }
 
 
-TransformPublisherDisplay::TransformPublisherDisplay() : rviz::Display(), ignore_updates_(false) {
+TransformPublisherDisplay::TransformPublisherDisplay()
+  : rviz::Display(), tf_callback_handle_(0), tf_request_handle_(0), ignore_updates_(false) {
   translation_property_ = new rviz::VectorProperty("translation", Ogre::Vector3::ZERO, "", this);
   rotation_property_ = new RotationProperty(this, "rotation");
 
@@ -269,21 +270,28 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type) {
   return true;
 }
 
+void TransformPublisherDisplay::cancelTFRequest() {
+  if (tf_request_handle_) {
+    context_->getTF2BufferPtr()->cancelTransformableRequest(tf_request_handle_);
+    tf_request_handle_ = 0;
+  }
+}
 
 bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geometry_msgs::Pose& pose) {
   const std::string& parent_frame = parent_frame_property_->getFrameStd();
   std::string error;
   bool success = true;
   if (context_->getFrameManager()->transformHasProblems(parent_frame, ros::Time(), error)) {
-    // on failure, listen to TF changes
-    auto tf = context_->getTF2BufferPtr();
-    tf->cancelTransformableRequest(tf_request_handle_);
-    tf_request_handle_ = tf->addTransformableRequest(tf_callback_handle_, fixed_frame_.toStdString(),
-                                                     parent_frame, ros::Time());
+    if (!tf_request_handle_) // on failure, listen to TF changes
+      tf_request_handle_ = context_->getTF2BufferPtr()->addTransformableRequest(
+          tf_callback_handle_, fixed_frame_.toStdString(), parent_frame, ros::Time());
     setStatusStd(rviz::StatusProperty::Error, MARKER_NAME, error);
     success = false;
+  } else {
+    if (tf_request_handle_)
+      cancelTFRequest();
+    setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "");
   }
-  setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "");
 
   const Eigen::Quaterniond& q = rotation_property_->getQuaternion();
   const Ogre::Vector3& p = translation_property_->getVector();
@@ -334,6 +342,7 @@ void TransformPublisherDisplay::onRefFrameChanged() {
     rotation_property_->setQuaternion(Eigen::Quaterniond(newPose.rotation()));
     ignore_updates_ = false;
   }
+  cancelTFRequest(); // create a new TF request (for the new parent frame) if necessary
   onAdaptTransformChanged();
   onFramesChanged();
 }
