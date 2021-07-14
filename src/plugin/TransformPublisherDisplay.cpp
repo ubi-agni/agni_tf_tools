@@ -273,6 +273,7 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type) {
 bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geometry_msgs::Pose& pose) {
   const std::string& parent_frame = parent_frame_property_->getFrameStd();
   std::string error;
+  bool success = true;
   if (context_->getFrameManager()->transformHasProblems(parent_frame, ros::Time(), error)) {
     // on failure, listen to TF changes
     auto tf = context_->getTF2BufferPtr();
@@ -280,7 +281,7 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geomet
     tf_request_handle_ = tf->addTransformableRequest(tf_callback_handle_, fixed_frame_.toStdString(),
                                                      parent_frame, ros::Time());
     setStatusStd(rviz::StatusProperty::Error, MARKER_NAME, error);
-    return false;
+    success = false;
   }
   setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "");
 
@@ -290,7 +291,7 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geomet
   header.frame_id = parent_frame;
   // frame-lock marker to update marker pose with frame updates
   header.stamp = ros::Time();
-  return true;
+  return success;
 }
 
 void TransformPublisherDisplay::setStatus(rviz::StatusProperty::Level level,
@@ -347,9 +348,7 @@ void TransformPublisherDisplay::onAdaptTransformChanged() {
 void TransformPublisherDisplay::onFramesChanged() {
   // update marker pose
   vm::InteractiveMarkerPose marker_pose;
-  if (!fillPoseStamped(marker_pose.header, marker_pose.pose))
-    return;
-  if (imarker_)
+  if (fillPoseStamped(marker_pose.header, marker_pose.pose) && imarker_)
     imarker_->processMessage(marker_pose);
 
   // prepare transform for broadcasting
@@ -367,15 +366,13 @@ void TransformPublisherDisplay::onTransformChanged() {
   if (ignore_updates_)
     return;
 
-  vm::InteractiveMarkerPose marker_pose;
-  if (!fillPoseStamped(marker_pose.header, marker_pose.pose))
-    return;
-
   // update marker pose + broadcast pose
   ignore_updates_ = true;
-  if (imarker_)
+  vm::InteractiveMarkerPose marker_pose;
+  if (fillPoseStamped(marker_pose.header, marker_pose.pose) && imarker_)
     imarker_->processMessage(marker_pose);
   ignore_updates_ = false;
+
   tf_pub_->setPose(marker_pose.pose);
 }
 
