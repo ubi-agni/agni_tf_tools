@@ -80,9 +80,6 @@ protected:
   void cancelTFRequest();
 
 protected Q_SLOTS:
-  void setStatus(rviz::StatusProperty::Level level, const QString& name, const QString& text) override;
-  void
-  setStatusStd(rviz::StatusProperty::Level /*level*/, const std::string& name, const std::string& text);
   void onRefFrameChanged();
   void onAdaptTransformChanged();
   void onFramesChanged();

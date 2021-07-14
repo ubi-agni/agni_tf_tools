@@ -290,7 +290,7 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geomet
   } else {
     if (tf_request_handle_)
       cancelTFRequest();
-    setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "");
+    setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
   }
 
   const Eigen::Quaterniond& q = rotation_property_->getQuaternion();
@@ -300,22 +300,6 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geomet
   // frame-lock marker to update marker pose with frame updates
   header.stamp = ros::Time();
   return success;
-}
-
-void TransformPublisherDisplay::setStatus(rviz::StatusProperty::Level level,
-                                          const QString& name,
-                                          const QString& text) {
-  if (level == rviz::StatusProperty::Ok && text.isEmpty()) {
-    Display::setStatus(level, name, text);
-    Display::deleteStatus(name);
-  } else
-    Display::setStatus(level, name, text);
-}
-
-void TransformPublisherDisplay::setStatusStd(rviz::StatusProperty::Level level,
-                                             const std::string& name,
-                                             const std::string& text) {
-  setStatus(level, QString::fromStdString(name), QString::fromStdString(text));
 }
 
 static bool getTransform(rviz::FrameManager& fm, const std::string& frame, Eigen::Affine3d& tf) {
