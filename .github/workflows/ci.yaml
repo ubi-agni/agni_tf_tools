@@ -12,6 +12,7 @@ on:
 jobs:
   default:
     strategy:
+      fail-fast: false
       matrix:
         distro: [ melodic, noetic ]
         include:
@@ -20,7 +21,7 @@ jobs:
               CLANG_TIDY: pedantic
 
     env:
-      CXXFLAGS: "-Werror -Wall -Wextra -Wwrite-strings -Wunreachable-code -Wpointer-arith -Wredundant-decls -Wno-strict-aliasing -Wno-sign-compare"
+      CXXFLAGS: "-Werror -Wall -Wextra -Wwrite-strings -Wunreachable-code -Wpointer-arith -Wredundant-decls"
       ROS_DISTRO: ${{ matrix.distro }}
       ROS_REPO: ${{ matrix.repo || 'ros' }}
       CATKIN_LINT: true
@@ -28,6 +29,7 @@ jobs:
       BASEDIR: /home/runner/work
       DOCKER_COMMIT: rhaschke/ici:agni_tf_tools-${{ matrix.distro }}-${{ matrix.repo || 'ros' }}
       CACHE_PREFIX: ${{ matrix.distro }}
+      CLANG_TIDY: ${{ matrix.env.CLANG_TIDY || 'false' }}
       CLANG_TIDY_BASE_REF: ${{ github.base_ref || '' }}
 
     name: "${{ matrix.distro }}${{ matrix.repo != 'ros' && format(' {0}', matrix.repo) || '' }}"
@@ -64,8 +66,7 @@ jobs:
           fi
 
       - name: industrial_ci
-        uses: rhaschke/industrial_ci@master
-        env: ${{ matrix.env || env }}
+        uses: ros-industrial/industrial_ci@master
 
       - name: Upload docker image as cache
         if: ${{ env.DOCKER_COMMIT }}
@@ -75,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: test-results
+          name: test-results-${{ matrix.distro }}
           path: ${{ env.BASEDIR }}/target_ws/**/test_results/**/*.xml
       - name: Prepare target_ws for cache
         if: ${{ always() && ! matrix.env.CCOV }}

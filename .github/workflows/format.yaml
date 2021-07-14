@@ -20,5 +20,5 @@ jobs:
         run: sudo apt-get install clang-format-10
       - uses: rhaschke/install-catkin_lint-action@v1.0
         with:
-          distro: melodic
+          distro: noetic
       - uses: pre-commit/action@v2.0.0
