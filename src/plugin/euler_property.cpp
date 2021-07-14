@@ -87,9 +87,9 @@ EulerProperty::EulerProperty(Property* parent,
   euler_[2] = new SpinBoxFloatProperty("", 0, "rotation angle about third axis", this);
   setEulerAxes("rpy");
 
-  for (int i = 0; i < 3; ++i) {
-    connect(euler_[i], &SpinBoxFloatProperty::aboutToChange, this, &EulerProperty::emitAboutToChange);
-    connect(euler_[i], &SpinBoxFloatProperty::changed, this, &EulerProperty::updateFromChildren);
+  for (auto& ep : euler_) {
+    connect(ep, &SpinBoxFloatProperty::aboutToChange, this, &EulerProperty::emitAboutToChange);
+    connect(ep, &SpinBoxFloatProperty::changed, this, &EulerProperty::updateFromChildren);
   }
 }
 
@@ -299,8 +299,8 @@ void EulerProperty::load(const Config& config) {
     // Setting the value once is better than letting the Property class
     // load all parameters independently, which would result in 4 update calls
     setEulerAxes(axes);
-    for (int i = 0; i < 3; ++i)
-      euler[i] = angles::from_degrees(euler[i]);
+    for (float& e : euler)
+      e = angles::from_degrees(e);
     setEulerAngles(euler[0], euler[1], euler[2], false);
   }
 }
@@ -318,8 +318,8 @@ void EulerProperty::setReadOnly(bool read_only) {
   // read-only mode should allow for changing axes, but not angles
   angles_read_only_ = read_only;
   // do not pass read-only to base class, but only to children
-  for (int i = 0; i < 3; ++i)
-    euler_[i]->setReadOnly(read_only);
+  for (auto& e : euler_)
+    e->setReadOnly(read_only);
 }
 
 } // end namespace rviz
