@@ -302,7 +302,7 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geomet
   return success;
 }
 
-static bool getTransform(rviz::FrameManager& fm, const std::string& frame, Eigen::Affine3d& tf) {
+static bool getTransform(rviz::FrameManager& fm, const std::string& frame, Eigen::Isometry3d& tf) {
   Ogre::Vector3 p = Ogre::Vector3::ZERO;
   Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
 
@@ -313,13 +313,14 @@ static bool getTransform(rviz::FrameManager& fm, const std::string& frame, Eigen
 
 void TransformPublisherDisplay::onRefFrameChanged() {
   // update pose to be relative to new reference frame
-  Eigen::Affine3d prevRef, nextRef;
+  Eigen::Isometry3d prevRef, nextRef;
   rviz::FrameManager& fm = *context_->getFrameManager();
   if (getTransform(fm, prev_parent_frame_, prevRef) &&
       getTransform(fm, parent_frame_property_->getFrameStd(), nextRef)) {
     const Ogre::Vector3& p = translation_property_->getVector();
-    Eigen::Affine3d curPose = Eigen::Translation3d(p.x, p.y, p.z) * rotation_property_->getQuaternion();
-    Eigen::Affine3d newPose = nextRef.inverse() * prevRef * curPose;
+    Eigen::Isometry3d curPose =
+        Eigen::Translation3d(p.x, p.y, p.z) * rotation_property_->getQuaternion();
+    Eigen::Isometry3d newPose = nextRef.inverse() * prevRef * curPose;
     Eigen::Vector3d t = newPose.translation();
     ignore_updates_ = true;
     translation_property_->setVector(Ogre::Vector3(t.x(), t.y(), t.z()));
