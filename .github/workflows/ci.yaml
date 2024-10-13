@@ -34,7 +34,7 @@ jobs:
     name: "${{ matrix.distro }}${{ matrix.repo != 'ros' && format(' {0}', matrix.repo) || '' }}"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # The target directory cache doesn't include the source directory because
       # that comes from the checkout. See "prepare target_ws for cache" task below
@@ -81,7 +81,7 @@ jobs:
           docker push ${{ env.DOCKER_COMMIT }} || true
 
       - name: Upload test artifacts (on failure)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test-results-${{ matrix.distro }}
