@@ -33,28 +33,29 @@
 #include "TransformBroadcaster.h"
 #include "rotation_property.h"
 
-#include <rviz/properties/string_property.h>
-#include <rviz/properties/bool_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/vector_property.h>
-#include <rviz/properties/tf_frame_property.h>
-#include <rviz/properties/enum_property.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rviz_common/rviz_common/display_context.hpp>
+#include <rviz_common/rviz_common/frame_manager_iface.hpp>
+#include <rviz_common/rviz_common/ros_integration/ros_node_abstraction_iface.hpp>
+#include <rviz_common/rviz_common/properties/bool_property.hpp>
+#include <rviz_common/rviz_common/properties/enum_property.hpp>
+#include <rviz_common/rviz_common/properties/float_property.hpp>
+#include <rviz_common/rviz_common/properties/status_property.hpp>
+#include <rviz_common/rviz_common/properties/tf_frame_property.hpp>
+#include <rviz_common/rviz_common/properties/vector_property.hpp>
+#include <interactive_markers/interactive_markers/tools.hpp>
+#include <tf2/exceptions.h>
+#include <tf2/time.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-#include <rviz/display_factory.h>
-#include <rviz/display_context.h>
-#include <rviz/frame_manager.h>
-#include <rviz/default_plugin/interactive_markers/interactive_marker.h>
-#include <interactive_markers/tools.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-namespace vm = visualization_msgs;
+namespace vm = visualization_msgs::msg;
 const std::string MARKER_NAME = "marker";
 
 enum MARKER_TYPE : std::int8_t { NONE, FRAME, IFRAME, DOF6 };
 
 namespace agni_tf_tools {
 
-void static updatePose(geometry_msgs::Pose& pose,
+void static updatePose(geometry_msgs::msg::Pose& pose,
                        const Eigen::Quaterniond& q,
                        Ogre::Vector3 p = Ogre::Vector3::ZERO) {
   pose.orientation.w = q.w();
@@ -68,57 +69,58 @@ void static updatePose(geometry_msgs::Pose& pose,
 }
 
 
-TransformPublisherDisplay::TransformPublisherDisplay()
-  : rviz::Display(), tf_callback_handle_(0), tf_request_handle_(0), ignore_updates_(false) {
-  translation_property_ = new rviz::VectorProperty("translation", Ogre::Vector3::ZERO, "", this);
+TransformPublisherDisplay::TransformPublisherDisplay() : rviz_common::Display(), ignore_updates_(false) {
+  translation_property_ =
+      new rviz_common::properties::VectorProperty("translation", Ogre::Vector3::ZERO, "", this);
   rotation_property_ = new RotationProperty(this, "rotation");
 
-  parent_frame_property_ =
-      new rviz::TfFrameProperty("parent frame", rviz::TfFrameProperty::FIXED_FRAME_STRING, "", this,
-                                nullptr, true, SLOT(onRefFrameChanged()), this);
+  parent_frame_property_ = new rviz_common::properties::TfFrameProperty(
+      "parent frame", rviz_common::properties::TfFrameProperty::FIXED_FRAME_STRING, "", this, nullptr,
+      true, SLOT(onRefFrameChanged()), this);
   adapt_transform_property_ =
-      new rviz::BoolProperty("adapt transformation", false,
-                             "Adapt transformation when changing the parent frame? "
-                             "If so, the marker will not move.",
-                             this, SLOT(onAdaptTransformChanged()), this);
+      new rviz_common::properties::BoolProperty("adapt transformation", false,
+                                                "Adapt transformation when changing the parent frame? "
+                                                "If so, the marker will not move.",
+                                                this, SLOT(onAdaptTransformChanged()), this);
   onAdaptTransformChanged();
 
-  broadcast_property_ = new rviz::BoolProperty("publish transform", true, "", this,
-                                               SLOT(onBroadcastEnableChanged()), this);
-  child_frame_property_ = new rviz::TfFrameProperty("child frame", "", "", broadcast_property_, nullptr,
-                                                    false, SLOT(onFramesChanged()), this);
+  broadcast_property_ = new rviz_common::properties::BoolProperty(
+      "publish transform", true, "", this, SLOT(onBroadcastEnableChanged()), this);
+  child_frame_property_ = new rviz_common::properties::TfFrameProperty(
+      "child frame", "", "", broadcast_property_, nullptr, false, SLOT(onFramesChanged()), this);
 
-  connect(translation_property_, &rviz::Property::changed, this,
+  connect(translation_property_, &rviz_common::properties::Property::changed, this,
           &TransformPublisherDisplay::onTransformChanged);
   connect(rotation_property_, &RotationProperty::quaternionChanged, this,
           &TransformPublisherDisplay::onTransformChanged);
   connect(rotation_property_, &RotationProperty::statusUpdate, this,
           &TransformPublisherDisplay::setStatus);
-  tf_pub_ = new TransformBroadcaster("", "", this);
-  tf_pub_->setEnabled(false); // only enable with display
+  tf_pub_ = nullptr;
 
-  marker_property_ = new rviz::EnumProperty("marker type", "interactive frame",
-                                            "Choose which type of interactive marker to show", this,
-                                            SLOT(onMarkerTypeChanged()), this);
+  marker_property_ =
+      new rviz_common::properties::EnumProperty("marker type", "interactive frame",
+                                                "Choose which type of interactive marker to show", this,
+                                                SLOT(onMarkerTypeChanged()), this);
   marker_property_->addOption("none", NONE);
   marker_property_->addOption("static frame", FRAME);
   marker_property_->addOption("interactive frame", IFRAME);
   marker_property_->addOption("6 DoF handles", DOF6);
 
-  marker_scale_property_ = new rviz::FloatProperty("marker scale", 0.2, "", marker_property_,
-                                                   SLOT(onMarkerScaleChanged()), this);
+  marker_scale_property_ = new rviz_common::properties::FloatProperty(
+      "marker scale", 0.2, "", marker_property_, SLOT(onMarkerScaleChanged()), this);
 }
 
 TransformPublisherDisplay::~TransformPublisherDisplay() {
-  context_->getTF2BufferPtr()->removeTransformableCallback(tf_callback_handle_);
 }
 
 void TransformPublisherDisplay::onInitialize() {
   Display::onInitialize();
   parent_frame_property_->setFrameManager(context_->getFrameManager());
   child_frame_property_->setFrameManager(context_->getFrameManager());
-  tf_callback_handle_ = context_->getTF2BufferPtr()->addTransformableCallback(
-      boost::bind(&TransformPublisherDisplay::onFramesChanged, this));
+
+  auto node = context_->getRosNodeAbstraction().lock()->get_raw_node();
+  tf_pub_ = new TransformBroadcaster(node, "", "", this);
+  tf_pub_->setEnabled(false); // only enable with display
 
   // show some children by default
   this->expand();
@@ -149,9 +151,9 @@ void TransformPublisherDisplay::update(float wall_dt, float ros_dt) {
   // create marker if not yet done
   if (!imarker_ && marker_property_->getOptionInt() != NONE &&
       !createInteractiveMarker(marker_property_->getOptionInt()))
-    setStatusStd(rviz::StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
+    setStatusStd(rviz_common::properties::StatusProperty::Warn, MARKER_NAME, "Waiting for tf");
   else if (imarker_)
-    imarker_->update(wall_dt); // get online marker updates
+    imarker_->update(); // get online marker updates
 }
 
 
@@ -173,7 +175,7 @@ static vm::Marker createArrowMarker(double scale, const Eigen::Vector3d& dir, co
   return marker;
 }
 
-inline void setOrientation(geometry_msgs::Quaternion& q, double w, double x, double y, double z) {
+inline void setOrientation(geometry_msgs::msg::Quaternion& q, double w, double x, double y, double z) {
   q.w = w;
   q.x = x;
   q.y = y;
@@ -251,13 +253,13 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type) {
     add6DOFControls(im);
   }
 
-  imarker_.reset(new rviz::InteractiveMarker(getSceneNode(), context_));
-  connect(imarker_.get(), &rviz::InteractiveMarker::userFeedback, this,
+  imarker_.reset(new rviz_default_plugins::displays::InteractiveMarker(getSceneNode(), context_));
+  connect(imarker_.get(), &rviz_default_plugins::displays::InteractiveMarker::userFeedback, this,
           &TransformPublisherDisplay::onMarkerFeedback);
-  connect(imarker_.get(), &rviz::InteractiveMarker::statusUpdate, this,
+  connect(imarker_.get(), &rviz_default_plugins::displays::InteractiveMarker::statusUpdate, this,
           &TransformPublisherDisplay::setStatusStd);
 
-  setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
+  setStatusStd(rviz_common::properties::StatusProperty::Ok, MARKER_NAME, "Ok");
 
   // fill in default controls
   interactive_markers::autoComplete(im, true);
@@ -270,27 +272,17 @@ bool TransformPublisherDisplay::createInteractiveMarker(int type) {
   return true;
 }
 
-void TransformPublisherDisplay::cancelTFRequest() {
-  if (tf_request_handle_) {
-    context_->getTF2BufferPtr()->cancelTransformableRequest(tf_request_handle_);
-    tf_request_handle_ = 0;
-  }
-}
-
-bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geometry_msgs::Pose& pose) {
+bool TransformPublisherDisplay::fillPoseStamped(std_msgs::msg::Header& header,
+                                                geometry_msgs::msg::Pose& pose) {
   const std::string& parent_frame = parent_frame_property_->getFrameStd();
   std::string error;
   bool success = true;
-  if (context_->getFrameManager()->transformHasProblems(parent_frame, ros::Time(), error)) {
-    if (!tf_request_handle_) // on failure, listen to TF changes
-      tf_request_handle_ = context_->getTF2BufferPtr()->addTransformableRequest(
-          tf_callback_handle_, fixed_frame_.toStdString(), parent_frame, ros::Time());
-    setStatusStd(rviz::StatusProperty::Error, MARKER_NAME, error);
+  if (context_->getFrameManager()->transformHasProblems(parent_frame, rclcpp::Time(0, 0, RCL_ROS_TIME),
+                                                        error)) {
+    setStatusStd(rviz_common::properties::StatusProperty::Error, MARKER_NAME, error);
     success = false;
   } else {
-    if (tf_request_handle_)
-      cancelTFRequest();
-    setStatusStd(rviz::StatusProperty::Ok, MARKER_NAME, "Ok");
+    setStatusStd(rviz_common::properties::StatusProperty::Ok, MARKER_NAME, "Ok");
   }
 
   const Eigen::Quaterniond& q = rotation_property_->getQuaternion();
@@ -298,23 +290,24 @@ bool TransformPublisherDisplay::fillPoseStamped(std_msgs::Header& header, geomet
   updatePose(pose, q, p);
   header.frame_id = parent_frame;
   // frame-lock marker to update marker pose with frame updates
-  header.stamp = ros::Time();
+  header.stamp = rclcpp::Time(0, 0, RCL_ROS_TIME);
   return success;
 }
 
-static bool getTransform(rviz::FrameManager& fm, const std::string& frame, Eigen::Isometry3d& tf) {
+static bool
+getTransform(rviz_common::FrameManagerIface& fm, const std::string& frame, Eigen::Isometry3d& tf) {
   Ogre::Vector3 p = Ogre::Vector3::ZERO;
   Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
 
-  bool success = fm.getTransform(frame, ros::Time(), p, q);
+  bool success = fm.getTransform(frame, rclcpp::Time(0, 0, RCL_ROS_TIME), p, q);
   tf = Eigen::Translation3d(p.x, p.y, p.z) * Eigen::Quaterniond(q.w, q.x, q.y, q.z);
-  return success || frame == rviz::TfFrameProperty::FIXED_FRAME_STRING.toStdString();
+  return success || frame == rviz_common::properties::TfFrameProperty::FIXED_FRAME_STRING.toStdString();
 }
 
 void TransformPublisherDisplay::onRefFrameChanged() {
   // update pose to be relative to new reference frame
   Eigen::Isometry3d prevRef, nextRef;
-  rviz::FrameManager& fm = *context_->getFrameManager();
+  rviz_common::FrameManagerIface& fm = *context_->getFrameManager();
   if (getTransform(fm, prev_parent_frame_, prevRef) &&
       getTransform(fm, parent_frame_property_->getFrameStd(), nextRef)) {
     const Ogre::Vector3& p = translation_property_->getVector();
@@ -327,7 +320,6 @@ void TransformPublisherDisplay::onRefFrameChanged() {
     rotation_property_->setQuaternion(Eigen::Quaterniond(newPose.rotation()));
     ignore_updates_ = false;
   }
-  cancelTFRequest(); // create a new TF request (for the new parent frame) if necessary
   onAdaptTransformChanged();
   onFramesChanged();
 }
@@ -346,7 +338,7 @@ void TransformPublisherDisplay::onFramesChanged() {
     imarker_->processMessage(marker_pose);
 
   // prepare transform for broadcasting
-  geometry_msgs::TransformStamped tf;
+  geometry_msgs::msg::TransformStamped tf;
   tf.header.frame_id = parent_frame_property_->getFrameStd();
   tf.child_frame_id = child_frame_property_->getFrameStd();
   tf.transform.translation.x = marker_pose.pose.position.x;
@@ -377,32 +369,38 @@ void TransformPublisherDisplay::onMarkerFeedback(vm::InteractiveMarkerFeedback& 
     return;
 
   // convert feedpack.pose to parent frame
-  geometry_msgs::Pose pose;
+  geometry_msgs::msg::Pose pose;
   try {
-    tf2::doTransform(feedback.pose, pose,
-                     context_->getTF2BufferPtr()->lookupTransform(parent_frame_property_->getFrameStd(),
-                                                                  feedback.header.frame_id,
-                                                                  feedback.header.stamp));
-  } catch (const std::runtime_error& e) {
-    ROS_DEBUG("Error transforming from frame '%s' to frame '%s': %s", feedback.header.frame_id.c_str(),
-              parent_frame_property_->getFrameStd().c_str(), e.what());
+    geometry_msgs::msg::PoseStamped pose_in;
+    pose_in.header = feedback.header;
+    pose_in.pose = feedback.pose;
+    geometry_msgs::msg::PoseStamped pose_out = context_->getFrameManager()->getTransformer()->transform(
+        pose_in, parent_frame_property_->getFrameStd());
+    pose = pose_out.pose;
+  } catch (const rviz_common::transformation::FrameTransformerException& e) {
+    RCLCPP_DEBUG(rclcpp::get_logger("agni_tf_tools"),
+                 "Error transforming from frame '%s' to frame '%s': %s",
+                 feedback.header.frame_id.c_str(), parent_frame_property_->getFrameStd().c_str(),
+                 e.what());
     return;
   }
 
-  const geometry_msgs::Point& p = pose.position;
-  const geometry_msgs::Quaternion& q = pose.orientation;
+  const geometry_msgs::msg::Point& p = pose.position;
+  const geometry_msgs::msg::Quaternion& q = pose.orientation;
 
   ignore_updates_ = true;
   translation_property_->setVector(Ogre::Vector3(p.x, p.y, p.z));
   rotation_property_->setQuaternion(Eigen::Quaterniond(q.w, q.x, q.y, q.z));
   ignore_updates_ = false;
 
-  updatePose(feedback.pose, rotation_property_->getQuaternion(), translation_property_->getVector());
-  tf_pub_->setPose(feedback.pose);
+  geometry_msgs::msg::Pose feedback_pose = feedback.pose;
+  updatePose(feedback_pose, rotation_property_->getQuaternion(), translation_property_->getVector());
+  tf_pub_->setPose(feedback_pose);
 }
 
 void TransformPublisherDisplay::onBroadcastEnableChanged() {
-  tf_pub_->setEnabled(isEnabled() && broadcast_property_->getBool());
+  if (tf_pub_)
+    tf_pub_->setEnabled(isEnabled() && broadcast_property_->getBool());
 }
 
 void TransformPublisherDisplay::onMarkerTypeChanged() {

@@ -1,30 +1,25 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.22)
 project(agni_tf_tools)
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rviz
-  tf2_geometry_msgs
-  tf2_ros
-)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rviz_common REQUIRED)
+find_package(rviz_default_plugins REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(interactive_markers REQUIRED)
+find_package(angles REQUIRED)
 
-message(STATUS "Using Qt ${rviz_QT_VERSION}")
-find_package(Qt5 ${rviz_QT_VERSION} REQUIRED Core Widgets)
-set(QT_LIBRARIES Qt5::Widgets)
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(Eigen3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS program_options)
-
-include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
-
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES agni_tf_tools
-CATKIN_DEPENDS roscpp rviz
-#  DEPENDS system_lib
-)
+find_package(Boost CONFIG REQUIRED COMPONENTS program_options)
 
 ## QT stuff
 # Find includes in corresponding build directories
@@ -34,6 +29,10 @@ set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(src)
 
+pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
+
 install(FILES
   plugin_description.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+  DESTINATION share/${PROJECT_NAME})
+
+ament_package()

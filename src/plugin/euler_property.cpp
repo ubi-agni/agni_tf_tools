@@ -32,13 +32,14 @@
 #include <QStringList>
 #include <QDoubleSpinBox>
 #include <QRegularExpression>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/status_property.h>
+#include <rviz_common/rviz_common/properties/float_property.hpp>
+#include <rviz_common/rviz_common/properties/status_property.hpp>
 #include <angles/angles.h>
 #include <boost/assign/list_of.hpp>
 #include "euler_property.h"
 
-namespace rviz {
+namespace rviz_common {
+namespace properties {
 
 class SpinBoxFloatProperty : public FloatProperty
 {
@@ -322,4 +323,5 @@ void EulerProperty::setReadOnly(bool read_only) {
     e->setReadOnly(read_only);
 }
 
-} // end namespace rviz
+} // end namespace properties
+} // end namespace rviz_common

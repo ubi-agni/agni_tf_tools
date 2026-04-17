@@ -29,7 +29,7 @@
  * Author: Robert Haschke <rhaschke@techfak.uni-bielefeld.de>
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <QApplication>
 #include <QVBoxLayout>
 
@@ -38,8 +38,8 @@
 #include "TransformBroadcaster.h"
 
 int main(int argc, char* argv[]) {
-  ros::init(argc, argv, "static_transform_publisher_gui",
-            ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<rclcpp::Node>("static_transform_publisher_gui");
   QApplication app(argc, argv);
 
   QWidget* main = new QWidget();
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
   main->setLayout(l);
 
   TransformBroadcaster* tf_pub =
-      new TransformBroadcaster(frames->parentFrame(), frames->childFrame(), main);
+      new TransformBroadcaster(node, frames->parentFrame(), frames->childFrame(), main);
   QObject::connect(frames, &FramesWidget::parentFrameChanged, tf_pub,
                    &TransformBroadcaster::setParentFrame);
   QObject::connect(frames, &FramesWidget::childFrameChanged, tf_pub,
@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
   main->setWindowTitle("static transform publisher");
   main->show();
   int ret = app.exec();
+  rclcpp::shutdown();
   delete main;
   return ret;
 }

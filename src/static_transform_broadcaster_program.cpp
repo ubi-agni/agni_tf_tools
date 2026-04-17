@@ -28,7 +28,10 @@
  */
 
 #include <tf2_ros/static_transform_broadcaster.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <Eigen/Geometry>
+#include <iostream>
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -43,7 +46,7 @@ static void usage(const char* prog_name, const po::options_description& opts, bo
   std::cout << opts << "\n";
 }
 
-static void parse_arguments(int argc, char** argv, geometry_msgs::TransformStamped& msg) {
+static void parse_arguments(int argc, char** argv, geometry_msgs::msg::TransformStamped& msg) {
   std::string mode;
   po::options_description options_description("allowed options");
   options_description.add_options()("help,h", "show this help message")("mode,m",
@@ -138,39 +141,41 @@ static void parse_arguments(int argc, char** argv, geometry_msgs::TransformStamp
     msg.header.frame_id = *arg++;
     msg.child_frame_id = *arg++;
   } catch (const po::error& e) {
-    ROS_FATAL_STREAM(e.what());
+    std::cerr << e.what() << "\n";
     usage(argv[0], options_description);
     exit(EXIT_FAILURE);
   } catch (const boost::bad_lexical_cast& e) {
-    ROS_FATAL_STREAM("failed to parse numerical value: " << *arg);
+    std::cerr << "failed to parse numerical value: " << *arg << "\n";
     usage(argv[0], options_description);
     exit(EXIT_FAILURE);
   }
 }
 
 int main(int argc, char** argv) {
-  // Initialize ROS
-  ros::init(argc, argv, "static_transform_publisher", ros::init_options::AnonymousName);
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<rclcpp::Node>("static_transform_publisher");
+  auto logger = node->get_logger();
 
-  geometry_msgs::TransformStamped msg;
+  geometry_msgs::msg::TransformStamped msg;
   parse_arguments(argc, argv, msg);
 
   if (msg.header.frame_id.empty() || msg.child_frame_id.empty()) {
-    ROS_FATAL("target or source frame is empty");
+    RCLCPP_FATAL(logger, "target or source frame is empty");
     exit(1);
   }
   if (msg.header.frame_id == msg.child_frame_id) {
-    ROS_FATAL("target and source frame are the same (%s, %s) this cannot work",
-              msg.child_frame_id.c_str(), msg.header.frame_id.c_str());
+    RCLCPP_FATAL(logger, "target and source frame are the same (%s, %s) this cannot work",
+                 msg.child_frame_id.c_str(), msg.header.frame_id.c_str());
     exit(1);
   }
 
-  tf2_ros::StaticTransformBroadcaster broadcaster;
+  tf2_ros::StaticTransformBroadcaster broadcaster(node);
   broadcaster.sendTransform(msg);
 
-  ROS_INFO("Spinning until killed, publishing %s to %s", msg.header.frame_id.c_str(),
-           msg.child_frame_id.c_str());
-  ros::spin();
+  RCLCPP_INFO(logger, "Spinning until killed, publishing %s to %s", msg.header.frame_id.c_str(),
+              msg.child_frame_id.c_str());
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

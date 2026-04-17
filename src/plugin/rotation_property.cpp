@@ -32,7 +32,8 @@
 #include "rotation_property.h"
 #include <QRegularExpression>
 
-using namespace rviz;
+using namespace rviz_common;
+using namespace rviz_common::properties;
 
 namespace agni_tf_tools {
 
@@ -51,9 +52,8 @@ RotationProperty::RotationProperty(Property* parent,
   , show_euler_string_(true) {
   euler_property_ = new EulerProperty(this, "Euler angles", value);
   quaternion_property_ =
-      new rviz::QuaternionProperty("quaternion",
-                                   Ogre::Quaternion(value.w(), value.x(), value.y(), value.z()),
-                                   "order: x, y, z, w", this);
+      new QuaternionProperty("quaternion", Ogre::Quaternion(value.w(), value.x(), value.y(), value.z()),
+                             "order: x, y, z, w", this);
   connect(euler_property_, &EulerProperty::changed, this, &RotationProperty::updateFromEuler);
   connect(quaternion_property_, &QuaternionProperty::changed, this,
           &RotationProperty::updateFromQuaternion);
@@ -142,12 +142,12 @@ void RotationProperty::updateString() {
   }
 }
 
-void RotationProperty::load(const Config& config) {
+void RotationProperty::load(const rviz_common::Config& config) {
   // save/load from EulerProperty. This handles both, quaternion and euler axes.
   euler_property_->load(config);
 }
 
-void RotationProperty::save(Config config) const {
+void RotationProperty::save(rviz_common::Config config) const {
   // save/load from EulerProperty. This handles both, quaternion and euler axes.
   euler_property_->save(config);
 }

@@ -1,4 +1,4 @@
-<package format="2">
+<package format="3">
   <name>agni_tf_tools</name>
   <version>0.1.6</version>
   <description>
@@ -26,13 +26,13 @@
 
 
   <!-- The *_depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <buildtool_depend>catkin</buildtool_depend>
+  <!-- Dependencies can be ament packages or system dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <build_depend>qtbase5-dev</build_depend>
   <build_depend>eigen</build_depend>
 
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>angles</depend>
   <depend>boost</depend>
   <depend>pluginlib</depend>
@@ -43,10 +43,12 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>rviz</depend>
+  <depend>rviz_common</depend>
+  <depend>rviz_default_plugins</depend>
 
   <export>
     <!-- Other tools can request additional information be placed here -->
-    <rviz plugin="${prefix}/plugin_description.xml"/>
+    <build_type>ament_cmake</build_type>
+    <rviz_common plugin="${prefix}/plugin_description.xml"/>
   </export>
 </package>

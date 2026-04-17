@@ -30,28 +30,16 @@
  */
 
 #include "TransformBroadcaster.h"
-#include <mutex>
 
-/** As there can only be a single ROS StaticTransformBroadcaster per ROS node
- *  (ROS only latches the last message on a given topic from a node),
- *  we need to cache the instances */
-std::shared_ptr<tf2_ros::StaticTransformBroadcaster> getBroadCasterInstance() {
-  static std::mutex m;
-  static std::weak_ptr<tf2_ros::StaticTransformBroadcaster> singleton_;
-
-  std::lock_guard<std::mutex> lock(m);
-  if (singleton_.expired()) {
-    auto result = std::make_shared<tf2_ros::StaticTransformBroadcaster>();
-    singleton_ = result;
-    return result;
-  }
-  return singleton_.lock();
-}
-
-TransformBroadcaster::TransformBroadcaster(const QString& parent_frame,
+TransformBroadcaster::TransformBroadcaster(const rclcpp::Node::SharedPtr& node,
+                                           const QString& parent_frame,
                                            const QString& child_frame,
                                            QObject* parent)
-  : QObject(parent), broadcaster_(getBroadCasterInstance()), valid_(false), enabled_(false) {
+  : QObject(parent)
+  , node_(node)
+  , broadcaster_(std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_))
+  , valid_(false)
+  , enabled_(false) {
   setPosition(0, 0, 0);
   setQuaternion(0, 0, 0, 1);
 
@@ -63,24 +51,24 @@ TransformBroadcaster::TransformBroadcaster(const QString& parent_frame,
   send();
 }
 
-const geometry_msgs::TransformStamped& TransformBroadcaster::value() const {
+const geometry_msgs::msg::TransformStamped& TransformBroadcaster::value() const {
   return msg_;
 }
 
-void TransformBroadcaster::setValue(const geometry_msgs::TransformStamped& tf) {
+void TransformBroadcaster::setValue(const geometry_msgs::msg::TransformStamped& tf) {
   msg_ = tf;
   check();
   send();
 }
 
-void TransformBroadcaster::setPose(const geometry_msgs::Pose& pose) {
+void TransformBroadcaster::setPose(const geometry_msgs::msg::Pose& pose) {
   bool old = enabled_;
   enabled_ = false;
 
-  const geometry_msgs::Point& p = pose.position;
+  const geometry_msgs::msg::Point& p = pose.position;
   setPosition(p.x, p.y, p.z);
 
-  const geometry_msgs::Quaternion& q = pose.orientation;
+  const geometry_msgs::msg::Quaternion& q = pose.orientation;
   setQuaternion(q.x, q.y, q.z, q.w);
 
   enabled_ = old;
@@ -138,10 +126,8 @@ void TransformBroadcaster::setQuaternion(double x, double y, double z, double w)
 
 void TransformBroadcaster::send() {
   if (enabled_ && valid_) {
-    msg_.header.stamp = ros::Time::now();
-    ++msg_.header.seq;
+    msg_.header.stamp = node_->now();
     broadcaster_->sendTransform(msg_);
-    ros::spinOnce();
   }
 }
 

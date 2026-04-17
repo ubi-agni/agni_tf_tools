@@ -35,18 +35,18 @@
 #include <Eigen/Geometry>
 #include <stdexcept>
 
-#include <rviz/properties/string_property.h>
-#include <rviz/properties/quaternion_property.h>
-#include <rviz/properties/status_property.h>
+#include <rviz_common/rviz_common/properties/string_property.hpp>
+#include <rviz_common/rviz_common/properties/quaternion_property.hpp>
+#include <rviz_common/rviz_common/properties/status_property.hpp>
 #include "euler_property.h"
 
 namespace agni_tf_tools {
 
-class RotationProperty : public rviz::StringProperty
+class RotationProperty : public rviz_common::properties::StringProperty
 {
   Q_OBJECT
 public:
-  RotationProperty(Property* parent = nullptr,
+  RotationProperty(rviz_common::properties::Property* parent = nullptr,
                    const QString& name = QString(),
                    const Eigen::Quaterniond& value = Eigen::Quaterniond::Identity(),
                    const char* changed_slot = nullptr,
@@ -56,8 +56,8 @@ public:
   bool setValue(const QVariant& value) override;
 
   /** @brief Load the value of this property and/or its children from the given Config node. */
-  void load(const rviz::Config& config) override;
-  void save(rviz::Config config) const override;
+  void load(const rviz_common::Config& config) override;
+  void save(rviz_common::Config config) const override;
 
   /** @brief Overridden from Property to propagate read-only-ness to children. */
   void setReadOnly(bool read_only) override;
@@ -76,13 +76,13 @@ Q_SIGNALS:
   /** signal emitted when quaternion value has changed */
   void quaternionChanged(Eigen::Quaterniond q);
   /** signal emitted to indicate error status, e.g. to a rviz::Display */
-  void statusUpdate(rviz::StatusProperty::Level, const QString&, const QString&);
+  void statusUpdate(rviz_common::properties::StatusProperty::Level, const QString&, const QString&);
 
 private:
   void updateString();
 
-  rviz::EulerProperty* euler_property_;
-  rviz::QuaternionProperty* quaternion_property_;
+  rviz_common::properties::EulerProperty* euler_property_;
+  rviz_common::properties::QuaternionProperty* quaternion_property_;
   bool ignore_quaternion_property_updates_;
   bool show_euler_string_;
 };

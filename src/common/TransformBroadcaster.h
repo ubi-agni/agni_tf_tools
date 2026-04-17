@@ -32,8 +32,10 @@
 #pragma once
 
 #include <QObject>
+#include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <Eigen/Geometry>
 
 /** QObject wrapper for tf2_ros::StaticTransformBroadcaster
@@ -43,13 +45,14 @@ class TransformBroadcaster : public QObject
 {
   Q_OBJECT
 public:
-  explicit TransformBroadcaster(const QString& parent_frame = "",
+  explicit TransformBroadcaster(const rclcpp::Node::SharedPtr& node,
+                                const QString& parent_frame = "",
                                 const QString& child_frame = "",
                                 QObject* parent = nullptr);
 
-  const geometry_msgs::TransformStamped& value() const;
-  void setValue(const geometry_msgs::TransformStamped& tf);
-  void setPose(const geometry_msgs::Pose& pose);
+  const geometry_msgs::msg::TransformStamped& value() const;
+  void setValue(const geometry_msgs::msg::TransformStamped& tf);
+  void setPose(const geometry_msgs::msg::Pose& pose);
 
   bool enabled() const;
 
@@ -71,8 +74,9 @@ protected:
   void check();
 
 private:
+  rclcpp::Node::SharedPtr node_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster_;
-  geometry_msgs::TransformStamped msg_;
+  geometry_msgs::msg::TransformStamped msg_;
   bool valid_;
   bool enabled_;
 };
