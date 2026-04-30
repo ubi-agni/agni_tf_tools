@@ -2,6 +2,13 @@
 Changelog for package agni_tf_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.0 (2026-04-30)
+------------------
+* ROS2 migration
+* Affine3d -> Isometry3d
+* Drop enforcement of (old) CXX standard
+* Contributors: Leroy Rügemer, Robert Haschke
+
 0.1.6 (2021-07-14)
 ------------------
 * Remove setStatus() variants
