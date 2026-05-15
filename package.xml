@@ -33,11 +33,18 @@
   <build_depend>eigen</build_depend>
 
   <depend>roscpp</depend>
+  <depend>angles</depend>
+  <depend>boost</depend>
+  <depend>pluginlib</depend>
+  <depend>geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>interactive_markers</depend>
+  <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>rviz</depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
     <rviz plugin="${prefix}/plugin_description.xml"/>
