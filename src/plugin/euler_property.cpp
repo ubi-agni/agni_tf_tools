@@ -99,7 +99,7 @@ void EulerProperty::setQuaternion(const Eigen::Quaterniond& q) {
   updateAngles(q); // this will also emit changed signals (in setEulerAngles)
 }
 
-void EulerProperty::setEulerAngles(double euler[], bool normalize) {
+void EulerProperty::setEulerAngles(double euler[3], bool normalize) {
   Eigen::Quaterniond q;
   if (fixed_)
     q = Eigen::AngleAxisd(euler[2], Eigen::Vector3d::Unit(axes_[2])) *

@@ -107,7 +107,7 @@ void RotationProperty::updateFromQuaternion() {
   updateString();
 }
 
-void RotationProperty::setEulerAngles(double euler[], bool normalize) {
+void RotationProperty::setEulerAngles(double euler[3], bool normalize) {
   euler_property_->setEulerAngles(euler, normalize);
 }
 

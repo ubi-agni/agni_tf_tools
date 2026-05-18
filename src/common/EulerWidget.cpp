@@ -81,7 +81,7 @@ EulerWidget::EulerWidget(QWidget* parent) : QWidget(parent), ui_(new Ui::EulerWi
           &EulerWidget::angleChanged);
 }
 
-void EulerWidget::getGuiAxes(uint a[]) const {
+void EulerWidget::getGuiAxes(uint a[3]) const {
   a[0] = ui_->a1->currentIndex();
   a[1] = ui_->a2->currentIndex();
   a[2] = ui_->a3->currentIndex();

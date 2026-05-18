@@ -51,7 +51,7 @@ public:
   /// retrieve indices of axes selected in GUI
   void getGuiAxes(uint a[3]) const;
   /// retrieve angles from GUI
-  void getGuiAngles(double e[]) const;
+  void getGuiAngles(double e[3]) const;
 
 signals:
   /// quaternion value has changed
