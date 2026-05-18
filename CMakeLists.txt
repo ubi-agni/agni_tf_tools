@@ -14,18 +14,14 @@ find_package(visualization_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(angles REQUIRED)
-
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(Eigen3 REQUIRED)
-
-## System dependencies are found with CMake's conventions
 find_package(Boost CONFIG REQUIRED COMPONENTS program_options)
 
-## QT stuff
-# Find includes in corresponding build directories
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
+if(Qt6_FOUND)
+  set(QT_VERSION_MAJOR 6)
+elseif(Qt5_FOUND)
+  set(QT_VERSION_MAJOR 5)
+endif()
 
 add_subdirectory(src)
 

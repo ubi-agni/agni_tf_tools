@@ -29,7 +29,6 @@
   <!-- Dependencies can be ament packages or system dependencies -->
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>qtbase5-dev</build_depend>
   <build_depend>eigen</build_depend>
 
   <depend>rclcpp</depend>

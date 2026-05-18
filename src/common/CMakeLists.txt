@@ -7,10 +7,10 @@ add_library(${PROJECT_NAME} STATIC
    TransformBroadcaster.cpp
    ${UI_SOURCES}
 )
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
-    Qt5::Widgets
-    Qt5::Core
+    Qt${QT_VERSION_MAJOR}::Widgets
     Eigen3::Eigen
     rclcpp::rclcpp
     angles::angles

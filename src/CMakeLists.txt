@@ -27,8 +27,7 @@ add_executable(${PROJECT_NAME}_static_transform_publisher_gui
 target_link_libraries(${PROJECT_NAME}_static_transform_publisher_gui
   ${PROJECT_NAME}
   Boost::program_options
-  Qt5::Widgets
-  Qt5::Core
+  Qt${QT_VERSION_MAJOR}::Widgets
 )
 set_target_properties(${PROJECT_NAME}_static_transform_publisher_gui
   PROPERTIES OUTPUT_NAME static_transform_publisher_gui
