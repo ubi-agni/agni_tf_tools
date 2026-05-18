@@ -35,7 +35,6 @@
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/status_property.h>
 #include <angles/angles.h>
-#include <boost/format.hpp>
 #include <boost/assign/list_of.hpp>
 #include "euler_property.h"
 
@@ -174,8 +173,7 @@ void EulerProperty::setEulerAxes(const QString& axes_spec) {
   // need to have 3 axes specs
   if (sAxes.end() - pc != 3)
     throw invalid_axes(
-        (boost::format("Invalid axes spec: %s. Expecting 3 chars from [xyz]") % qPrintable(axes_spec))
-            .str());
+        QString("Invalid axes spec: %1. Expecting 3 chars from [xyz]").arg(axes_spec).toStdString());
 
   // parse axes specs into indexes
   uint axes[3];
@@ -183,7 +181,7 @@ void EulerProperty::setEulerAxes(const QString& axes_spec) {
     int idx = pc->toLatin1() - 'x';
     if (idx < 0 || idx > 2)
       throw invalid_axes(
-          (boost::format("invalid axis char: %c (only xyz allowed)") % pc->unicode()).str());
+          QString("invalid axis char: %1 (only xyz allowed)").arg(QChar(pc->unicode())).toStdString());
     if (i > 0 && axes[i - 1] == static_cast<uint>(idx))
       throw invalid_axes("consecutive axes need to be different");
     axes[i] = idx;
