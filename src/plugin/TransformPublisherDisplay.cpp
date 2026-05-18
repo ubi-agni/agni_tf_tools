@@ -50,7 +50,7 @@
 namespace vm = visualization_msgs;
 const std::string MARKER_NAME = "marker";
 
-enum MARKER_TYPE { NONE, FRAME, IFRAME, DOF6 };
+enum MARKER_TYPE : std::int8_t { NONE, FRAME, IFRAME, DOF6 };
 
 namespace agni_tf_tools {
 

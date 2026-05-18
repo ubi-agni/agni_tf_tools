@@ -35,13 +35,12 @@ namespace po = boost::program_options;
 
 static void usage(const char* prog_name, const po::options_description& opts, bool desc = false) {
   if (desc) {
-    std::cout << "A command line utility for manually defining a (static) transform" << std::endl;
-    std::cout << "from parent_frame_id to child_frame_id." << std::endl;
+    std::cout << "A command line utility for manually defining a (static) transform\n"
+                 "from parent_frame_id to child_frame_id.\n";
   }
-  std::cout << std::endl;
-  std::cout << "Usage: " << prog_name << " [options] x y z  <rotation> parent_frame_id child_frame_id"
-            << std::endl;
-  std::cout << opts << std::endl;
+  std::cout << "\n";
+  std::cout << "Usage: " << prog_name << " [options] x y z  <rotation> parent_frame_id child_frame_id\n";
+  std::cout << opts << "\n";
 }
 
 static void parse_arguments(int argc, char** argv, geometry_msgs::TransformStamped& msg) {
