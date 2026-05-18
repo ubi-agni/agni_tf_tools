@@ -30,6 +30,7 @@
  */
 
 #include "rotation_property.h"
+#include <QRegularExpression>
 
 using namespace rviz;
 
@@ -120,10 +121,11 @@ void RotationProperty::setEulerAxes(const QString& axes_spec) {
 
 bool RotationProperty::setValue(const QVariant& value) {
   // forward parsing to either Quaternion- or EulerProperty
-  const QRegExp quatSpec("\\s*(quat:)?([^;]+;){3}");
+  const QRegularExpression quatSpec("\\s*(quat:)?([^;]+;){3}");
   QString s = value.toString();
-  if (quatSpec.indexIn(s) != -1) {
-    s = s.mid(quatSpec.cap(1).length());
+  QRegularExpressionMatch match = quatSpec.match(s);
+  if (match.hasMatch()) {
+    s = s.mid(match.captured(1).length());
     return quaternion_property_->setValue(s);
   }
   return euler_property_->setValue(value);

@@ -31,6 +31,7 @@
 
 #include <QStringList>
 #include <QDoubleSpinBox>
+#include <QRegularExpression>
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/status_property.h>
 #include <angles/angles.h>
@@ -173,7 +174,7 @@ void EulerProperty::setEulerAxes(const QString& axes_spec) {
   // need to have 3 axes specs
   if (sAxes.end() - pc != 3)
     throw invalid_axes(
-        (boost::format("Invalid axes spec: %s. Expecting 3 chars from [xyz]") % axes_spec.toStdString())
+        (boost::format("Invalid axes spec: %s. Expecting 3 chars from [xyz]") % qPrintable(axes_spec))
             .str());
 
   // parse axes specs into indexes
@@ -205,19 +206,20 @@ bool EulerProperty::setValue(const QVariant& value) {
   static const QString statusAxes("Euler axes");
   static const QString statusAngles("Euler angles");
 
-  const QRegExp axesSpec("\\s*([a-z]+)\\s*:?");
+  const QRegularExpression axesSpec("\\s*([a-z]+)\\s*:?");
   QString s = value.toString();
 
   // parse axes spec
-  if (axesSpec.indexIn(s) != -1) {
+  QRegularExpressionMatch match = axesSpec.match(s);
+  if (match.hasMatch()) {
     try {
-      setEulerAxes(axesSpec.cap(1));
+      setEulerAxes(match.captured(1));
       Q_EMIT statusUpdate(StatusProperty::Ok, statusAxes, axes_string_);
     } catch (const invalid_axes& e) {
       Q_EMIT statusUpdate(StatusProperty::Warn, statusAxes, e.what());
       return false;
     }
-    s = s.mid(axesSpec.matchedLength());
+    s = s.mid(match.capturedLength(0));
   }
 
   // in read-only mode only allow to change axes, but not angles
