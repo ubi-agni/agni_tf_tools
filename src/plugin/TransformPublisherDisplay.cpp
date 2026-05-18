@@ -44,8 +44,8 @@
 #include <rviz_common/rviz_common/properties/tf_frame_property.hpp>
 #include <rviz_common/rviz_common/properties/vector_property.hpp>
 #include <interactive_markers/interactive_markers/tools.hpp>
-#include <tf2/exceptions.h>
-#include <tf2/time.h>
+#include <tf2/exceptions.hpp>
+#include <tf2/time.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace vm = visualization_msgs::msg;

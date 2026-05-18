@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tf2_ros/static_transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <Eigen/Geometry>
@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  tf2_ros::StaticTransformBroadcaster broadcaster(node);
+  tf2_ros::StaticTransformBroadcaster broadcaster(*node);
   broadcaster.sendTransform(msg);
 
   RCLCPP_INFO(logger, "Spinning until killed, publishing %s to %s", msg.header.frame_id.c_str(),
