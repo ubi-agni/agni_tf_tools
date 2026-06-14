@@ -2,6 +2,11 @@
 Changelog for package agni_tf_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.1 (2026-06-14)
+------------------
+* Replace deprecated update() method
+* Contributors: Robert Haschke
+
 1.0.0 (2026-04-30)
 ------------------
 * ROS2 migration
