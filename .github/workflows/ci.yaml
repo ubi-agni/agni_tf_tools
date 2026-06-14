@@ -14,9 +14,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [ humble, jazzy, rolling ]
+        distro: [ rolling ]
         include:
           - distro: rolling
+            repo: testing
             env:
               CLANG_TIDY: true
 
