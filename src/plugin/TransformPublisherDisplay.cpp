@@ -143,7 +143,8 @@ void TransformPublisherDisplay::onDisable() {
   createInteractiveMarker(NONE);
 }
 
-void TransformPublisherDisplay::update(float wall_dt, float ros_dt) {
+void TransformPublisherDisplay::update(std::chrono::nanoseconds wall_dt,
+                                       std::chrono::nanoseconds ros_dt) {
   if (!this->isEnabled())
     return;
 

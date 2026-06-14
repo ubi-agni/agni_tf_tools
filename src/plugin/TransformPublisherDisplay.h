@@ -71,7 +71,7 @@ protected:
   void onInitialize() override;
   void onEnable() override;
   void onDisable() override;
-  void update(float wall_dt, float ros_dt) override;
+  void update(std::chrono::nanoseconds wall_dt, std::chrono::nanoseconds ros_dt) override;
 
   void addFrameControls(visualization_msgs::msg::InteractiveMarker& im, double scale, bool interactive);
   void add6DOFControls(visualization_msgs::msg::InteractiveMarker& im);
