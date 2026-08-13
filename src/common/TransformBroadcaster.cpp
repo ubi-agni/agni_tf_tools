@@ -37,7 +37,7 @@ TransformBroadcaster::TransformBroadcaster(const rclcpp::Node::SharedPtr& node,
                                            QObject* parent)
   : QObject(parent)
   , node_(node)
-  , broadcaster_(std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_))
+  , broadcaster_(std::make_shared<tf2_ros::StaticTransformBroadcaster>(*node_))
   , valid_(false)
   , enabled_(false) {
   setPosition(0, 0, 0);
