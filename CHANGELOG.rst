@@ -2,6 +2,11 @@
 Changelog for package agni_tf_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.2 (2026-08-13)
+------------------
+* Initialize StaticTransformBroadcaster from Node reference instead of pointer
+* Contributors: Robert Haschke
+
 1.0.1 (2026-06-14)
 ------------------
 * Replace deprecated update() method
