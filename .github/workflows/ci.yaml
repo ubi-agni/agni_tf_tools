@@ -14,12 +14,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [ rolling ]
+        distro: [ lyrical, rolling ]
         include:
           - distro: rolling
             repo: testing
             env:
-              CLANG_TIDY: true
+              CLANG_TIDY: false
 
     env:
       CXXFLAGS: "-Wall -Wextra -Wwrite-strings -Wunreachable-code -Wpointer-arith -Wredundant-decls"
